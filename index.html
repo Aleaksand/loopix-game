@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
     <title>Loopix</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --bg-grad-1: #161838;
@@ -238,6 +239,30 @@
             background: rgba(255, 255, 255, 0.3);
             transform: scale(0.95);
         }
+        #leaderboardBtn {
+            position: fixed;
+            top: max(16px, env(safe-area-inset-top, 16px));
+            right: calc(max(16px, env(safe-area-inset-right, 16px)) + 56px);
+            width: 46px;
+            height: 46px;
+            background: linear-gradient(135deg, rgba(255, 213, 79, 0.22), rgba(79, 195, 247, 0.22));
+            border: 1px solid rgba(255, 213, 79, 0.45);
+            border-radius: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            touch-action: manipulation;
+            color: #ffd54f;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 16px rgba(255, 213, 79, 0.2);
+            transition: transform 0.2s, background 0.2s;
+        }
+        #leaderboardBtn:active {
+            background: rgba(255, 213, 79, 0.35);
+            transform: scale(0.95);
+        }
         .vector-icon {
             width: 22px;
             height: 22px;
@@ -310,7 +335,7 @@
         #hammerIndicator.show {
             opacity: 1;
         }
-        #settingsModal, #gameOverModal, #adModal, #rescueModal, #shareModal {
+        #settingsModal, #gameOverModal, #adModal, #rescueModal, #shareModal, #leaderboardModal {
             position: fixed;
             top: 0;
             left: 0;
@@ -323,7 +348,7 @@
             z-index: 1000;
             backdrop-filter: blur(5px);
         }
-        #settingsModal.show, #gameOverModal.show, #adModal.show, #rescueModal.show, #shareModal.show {
+        #settingsModal.show, #gameOverModal.show, #adModal.show, #rescueModal.show, #shareModal.show, #leaderboardModal.show {
             display: flex;
         }
         .modal-content {
@@ -352,6 +377,84 @@
             margin-bottom: 24px;
             opacity: 0.8;
             line-height: 1.5;
+        }
+        /* Стили таблицы лидеров */
+        .leaderboard-user-info {
+            font-size: 0.84em;
+            color: rgba(255, 255, 255, 0.72);
+            margin-bottom: 12px;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 8px 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .leaderboard-user-name {
+            font-weight: 700;
+            color: var(--accent-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 46vh;
+            overflow-y: auto;
+            margin: 10px 0 16px;
+            padding-right: 2px;
+            text-align: left;
+        }
+        .leaderboard-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.07);
+            padding: 10px 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: transform 0.15s;
+        }
+        .leaderboard-row.is-me {
+            background: rgba(79, 195, 247, 0.18);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(79, 195, 247, 0.25);
+        }
+        .leaderboard-rank {
+            font-weight: 800;
+            width: 34px;
+            font-size: 1.05em;
+            color: rgba(255, 255, 255, 0.65);
+            flex-shrink: 0;
+        }
+        .leaderboard-row.rank-1 .leaderboard-rank { color: #ffd700; font-size: 1.25em; }
+        .leaderboard-row.rank-2 .leaderboard-rank { color: #e0e0e0; font-size: 1.18em; }
+        .leaderboard-row.rank-3 .leaderboard-rank { color: #ffab40; font-size: 1.12em; }
+        .leaderboard-name {
+            flex: 1;
+            font-weight: 600;
+            font-size: 0.95em;
+            color: white;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-right: 10px;
+        }
+        .leaderboard-score {
+            font-weight: 800;
+            font-size: 1.05em;
+            color: var(--accent-tertiary);
+            flex-shrink: 0;
+        }
+        .leaderboard-status {
+            padding: 26px 10px;
+            opacity: 0.75;
+            font-size: 0.95em;
+            text-align: center;
         }
         .setting-item {
             display: flex;
@@ -877,8 +980,18 @@
     </div>
     
     <h1>LOOPIX</h1>
+    <div id="leaderboardBtn" title="Таблица лидеров">
+        <svg class="vector-icon" viewBox="0 0 24 24">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+            <path d="M4 22h16"></path>
+            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+        </svg>
+    </div>
     <div id="settingsBtn" title="Настройки">
-        <svg class="vector-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <svg class="vector-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
     </div>
     <div id="hammerBtn" title="Удалить блок (смотреть рекламу)">
         <svg class="vector-icon" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M15 12l-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9"></path><path d="M17.64 15L22 10.64l-6-6L11.64 9"></path><path d="m15 5 3 3"></path></svg>
@@ -936,6 +1049,23 @@
         </div>
         <div id="tutorialTarget" class="tutorial-target"></div>
         <button id="tutorialSkip" data-i18n="skipTutorial">Пропустить обучение</button>
+    </div>
+
+    <div id="leaderboardModal">
+        <div class="modal-content">
+            <h2 data-i18n="leaderboardTitle">🏆 Лидеры</h2>
+            <div class="leaderboard-user-info">
+                <span data-i18n="yourAccount">Аккаунт:</span>
+                <span class="leaderboard-user-name" id="lbCurrentPlayerName">...</span>
+            </div>
+            <div id="leaderboardList" class="leaderboard-list">
+                <div class="leaderboard-status" data-i18n="leaderboardLoading">Загрузка...</div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn primary" id="refreshLeaderboardBtn" data-i18n="refresh">Обновить</button>
+                <button class="modal-btn secondary" id="closeLeaderboardBtn" data-i18n="close">Закрыть</button>
+            </div>
+        </div>
     </div>
 
     <div id="settingsModal">
@@ -1005,6 +1135,7 @@
             <div id="finalLoops">Петель: 0</div>
             <div class="modal-actions">
                 <button class="modal-btn primary" id="playAgainBtn" data-i18n="playAgain">Начать заново</button>
+                <button class="modal-btn secondary" id="gameOverLeaderboardBtn" data-i18n="leaderboardTitle">🏆 Лидеры</button>
             </div>
         </div>
     </div>
@@ -1024,7 +1155,25 @@
     <div id="yandexBanner" data-i18n="adBanner">Рекламный баннер</div>
     
     <script>
-        // Безопасная обертка для работы с localStorage в Android WebView
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            try {
+                tg.ready();
+                tg.expand();
+                if (typeof tg.disableVerticalSwipes === 'function') {
+                    tg.disableVerticalSwipes();
+                }
+                if (typeof tg.setHeaderColor === 'function') {
+                    tg.setHeaderColor('#161838');
+                }
+                if (typeof tg.setBackgroundColor === 'function') {
+                    tg.setBackgroundColor('#161838');
+                }
+            } catch (e) {}
+        }
+
+        // Безопасная обертка для работы с localStorage в Android/iOS WebView
         const Storage = {
             get(key, fallback = null) {
                 try {
@@ -1058,7 +1207,8 @@
         ];
 
         function detectSystemLanguage() {
-            const navLang = navigator.language || navigator.userLanguage || 'ru';
+            const tgLang = window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code;
+            const navLang = tgLang || navigator.language || navigator.userLanguage || 'ru';
             const lang = navLang.toLowerCase().split('-')[0];
             const supportedLangs = ['ru', 'en'];
             return supportedLangs.includes(lang) ? lang : 'ru';
@@ -1098,6 +1248,13 @@
                     tutorialStep3: 'Ставь сюда',
                     skipTutorial: 'Пропустить обучение',
                     settings: 'Настройки',
+                    leaderboardTitle: '🏆 Таблица лидеров',
+                    leaderboardHint: 'Таблица лидеров',
+                    leaderboardLoading: 'Загрузка рекордов...',
+                    leaderboardEmpty: 'Пока нет рекордов. Стань первым!',
+                    leaderboardError: 'Не удалось загрузить таблицу лидеров',
+                    yourAccount: 'Ты:',
+                    refresh: '🔄 Обновить',
                     themesTitle: 'Цветовые темы',
                     statTotalLoops: 'Всего петель',
                     statCleanBoards: 'Чистых полей',
@@ -1169,6 +1326,13 @@
                     tutorialStep3: 'Place here',
                     skipTutorial: 'Skip tutorial',
                     settings: 'Settings',
+                    leaderboardTitle: '🏆 Leaderboard',
+                    leaderboardHint: 'Leaderboard',
+                    leaderboardLoading: 'Loading scores...',
+                    leaderboardEmpty: 'No records yet. Be the first!',
+                    leaderboardError: 'Failed to load leaderboard',
+                    yourAccount: 'You:',
+                    refresh: '🔄 Refresh',
                     themesTitle: 'Color Themes',
                     statTotalLoops: 'Total Loops',
                     statCleanBoards: 'All Clears',
@@ -1245,6 +1409,137 @@
                 }
             }
         };
+
+        // Менеджер таблицы лидеров через JSONBin.io с определением Telegram-аккаунта
+        class LeaderboardManager {
+            constructor() {
+                this.binId = '6aec65c3ac6210605a6ed49b';
+                this.masterKey = '$2a$10$0UPVjzWfsop53iHylYWmEenBZV0BIhjqWE2clm6w8jWYM5ikCMFhm';
+                this.apiUrl = `https://api.jsonbin.io/v3/b/${this.binId}`;
+                this.isSaving = false;
+                this.pendingScore = null;
+            }
+
+            // Получение данных игрока из Telegram WebApp (или локального фоллбэка при тесте из браузера)
+            getTelegramPlayer() {
+                const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+                if (tgUser && tgUser.id) {
+                    const fullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ').trim();
+                    let displayName = fullName;
+                    if (tgUser.username) {
+                        displayName = fullName ? `${fullName} (@${tgUser.username})` : `@${tgUser.username}`;
+                    }
+                    if (!displayName) {
+                        displayName = `User #${tgUser.id}`;
+                    }
+                    return {
+                        id: String(tgUser.id),
+                        username: tgUser.username ? `@${tgUser.username}` : '',
+                        name: displayName
+                    };
+                }
+
+                let guestId = Storage.get('loopixGuestId');
+                if (!guestId) {
+                    guestId = 'guest_' + Math.random().toString(36).substring(2, 9);
+                    Storage.set('loopixGuestId', guestId);
+                }
+                const savedName = Storage.get('loopixGuestName') || `Player_${guestId.slice(-4)}`;
+                return {
+                    id: guestId,
+                    username: '',
+                    name: savedName
+                };
+            }
+
+            async fetchPlayers() {
+                const response = await fetch(`${this.apiUrl}/latest`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Master-Key': this.masterKey,
+                        'X-Bin-Meta': 'false'
+                    },
+                    cache: 'no-store'
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                const record = data?.record || data;
+                return Array.isArray(record?.players) ? record.players : [];
+            }
+
+            async submitScore(score) {
+                const numericScore = Number(score) || 0;
+                if (numericScore <= 0) return;
+
+                if (this.isSaving) {
+                    this.pendingScore = Math.max(this.pendingScore || 0, numericScore);
+                    return;
+                }
+
+                this.isSaving = true;
+                try {
+                    const player = this.getTelegramPlayer();
+                    const players = await this.fetchPlayers();
+
+                    const existingIdx = players.findIndex(p =>
+                        (p.id && String(p.id) === player.id) ||
+                        (!p.id && p.name === player.name)
+                    );
+
+                    let shouldUpdate = false;
+                    if (existingIdx >= 0) {
+                        const prevBest = Number(players[existingIdx].score) || 0;
+                        if (numericScore > prevBest || players[existingIdx].name !== player.name) {
+                            players[existingIdx] = {
+                                ...players[existingIdx],
+                                id: player.id,
+                                name: player.name,
+                                username: player.username,
+                                score: Math.max(prevBest, numericScore),
+                                updatedAt: Date.now()
+                            };
+                            shouldUpdate = true;
+                        }
+                    } else {
+                        players.push({
+                            id: player.id,
+                            name: player.name,
+                            username: player.username,
+                            score: numericScore,
+                            updatedAt: Date.now()
+                        });
+                        shouldUpdate = true;
+                    }
+
+                    players.sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0));
+                    const topPlayers = players.slice(0, 100);
+
+                    if (shouldUpdate) {
+                        await fetch(this.apiUrl, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Master-Key': this.masterKey
+                            },
+                            body: JSON.stringify({ players: topPlayers })
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Leaderboard sync error:', e);
+                } finally {
+                    this.isSaving = false;
+                    if (this.pendingScore !== null) {
+                        const next = this.pendingScore;
+                        this.pendingScore = null;
+                        this.submitScore(next);
+                    }
+                }
+            }
+        }
+
+        const leaderboardManager = new LeaderboardManager();
         
         const getComboPhrases = () => [
             I18N.t('comboCool'), I18N.t('comboGreat'), I18N.t('comboSuper'), 
@@ -1546,6 +1841,12 @@
             
             vibrate(pattern) {
                 if (!this.enabled) return;
+                if (window.Telegram?.WebApp?.HapticFeedback) {
+                    try {
+                        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+                        return;
+                    } catch (e) {}
+                }
                 try {
                     if (typeof navigator.vibrate === 'function') navigator.vibrate(pattern);
                 } catch (e) {}
@@ -1553,13 +1854,28 @@
             
             comboVibration(size) {
                 if (!this.enabled) return;
+                if (window.Telegram?.WebApp?.HapticFeedback) {
+                    try {
+                        window.Telegram.WebApp.HapticFeedback.impactOccurred(size >= 7 ? 'heavy' : 'medium');
+                        return;
+                    } catch (e) {}
+                }
                 const pattern = size >= 10 ? [50, 40, 50, 40, 100] :
                                size >= 7 ? [40, 30, 60, 30, 80] :
                                size >= 5 ? [30, 30, 50] : [20, 20, 40];
                 this.vibrate(pattern);
             }
             
-            lightVibration() { this.vibrate(10); }
+            lightVibration() {
+                if (!this.enabled) return;
+                if (window.Telegram?.WebApp?.HapticFeedback) {
+                    try {
+                        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                        return;
+                    } catch (e) {}
+                }
+                this.vibrate(10);
+            }
             
             toggle() {
                 this.enabled = !this.enabled;
@@ -1783,6 +2099,9 @@
                 this.setupAutoSave();
                 I18N.updateUI();
                 this.updateUITexts();
+                if (this.highScore > 0) {
+                    leaderboardManager.submitScore(this.highScore);
+                }
                 requestAnimationFrame(() => this.setupHighDPICanvas());
             }
 
@@ -1882,6 +2201,18 @@
             setupUIEvents() {
                 window.addEventListener('resize', () => this.setupHighDPICanvas());
 
+                document.getElementById('leaderboardBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.openLeaderboard();
+                });
+                document.getElementById('gameOverLeaderboardBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.openLeaderboard();
+                });
+                document.getElementById('refreshLeaderboardBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.loadLeaderboardData();
+                });
+                document.getElementById('closeLeaderboardBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.closeLeaderboard();
+                });
                 document.getElementById('settingsBtn').addEventListener('click', (e) => {
                     e.preventDefault(); e.stopPropagation(); this.openSettings();
                 });
@@ -1941,6 +2272,68 @@
                 });
             }
 
+            async openLeaderboard() {
+                if (!this.canProcessClick() || this.tutorialActive) return;
+                const player = leaderboardManager.getTelegramPlayer();
+                document.getElementById('lbCurrentPlayerName').textContent = `${player.name} (${this.highScore})`;
+                document.getElementById('leaderboardModal').classList.add('show');
+                I18N.updateUI();
+                await this.loadLeaderboardData();
+            }
+
+            closeLeaderboard() {
+                document.getElementById('leaderboardModal').classList.remove('show');
+            }
+
+            async loadLeaderboardData() {
+                const listEl = document.getElementById('leaderboardList');
+                listEl.innerHTML = `<div class="leaderboard-status">${I18N.t('leaderboardLoading')}</div>`;
+
+                try {
+                    if (this.highScore > 0) {
+                        await leaderboardManager.submitScore(this.highScore);
+                    }
+                    const players = await leaderboardManager.fetchPlayers();
+                    players.sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0));
+
+                    if (!players.length) {
+                        listEl.innerHTML = `<div class="leaderboard-status">${I18N.t('leaderboardEmpty')}</div>`;
+                        return;
+                    }
+
+                    const currentPlayer = leaderboardManager.getTelegramPlayer();
+                    listEl.innerHTML = '';
+
+                    players.slice(0, 50).forEach((entry, idx) => {
+                        const rank = idx + 1;
+                        const isMe = (entry.id && String(entry.id) === currentPlayer.id) ||
+                                     (!entry.id && entry.name === currentPlayer.name);
+
+                        const row = document.createElement('div');
+                        row.className = `leaderboard-row rank-${rank}${isMe ? ' is-me' : ''}`;
+
+                        const rankEl = document.createElement('div');
+                        rankEl.className = 'leaderboard-rank';
+                        rankEl.textContent = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+
+                        const nameEl = document.createElement('div');
+                        nameEl.className = 'leaderboard-name';
+                        nameEl.textContent = entry.name || 'Player';
+
+                        const scoreEl = document.createElement('div');
+                        scoreEl.className = 'leaderboard-score';
+                        scoreEl.textContent = Number(entry.score) || 0;
+
+                        row.appendChild(rankEl);
+                        row.appendChild(nameEl);
+                        row.appendChild(scoreEl);
+                        listEl.appendChild(row);
+                    });
+                } catch (e) {
+                    listEl.innerHTML = `<div class="leaderboard-status">${I18N.t('leaderboardError')}</div>`;
+                }
+            }
+
             setupMobileLifecycle() {
                 window.addEventListener('contextmenu', (e) => e.preventDefault());
 
@@ -1986,13 +2379,16 @@
                         return;
                     }
 
+                    const leaderboardModal = document.getElementById('leaderboardModal');
                     const shareModal = document.getElementById('shareModal');
                     const settingsModal = document.getElementById('settingsModal');
                     const adModal = document.getElementById('adModal');
                     const rescueModal = document.getElementById('rescueModal');
                     const gameOverModal = document.getElementById('gameOverModal');
 
-                    if (shareModal.classList.contains('show')) {
+                    if (leaderboardModal.classList.contains('show')) {
+                        this.closeLeaderboard();
+                    } else if (shareModal.classList.contains('show')) {
                         this.closeShareModal();
                     } else if (adModal.classList.contains('show')) {
                         this.cancelAd();
@@ -2024,6 +2420,7 @@
             
             updateUITexts() {
                 document.getElementById('hammerBtn').title = I18N.t('hammerHint');
+                document.getElementById('leaderboardBtn').title = I18N.t('leaderboardHint');
                 document.getElementById('hammerIndicator').textContent = I18N.t('hammerIndicator');
                 if (this.isGameOver) {
                     document.getElementById('finalScore').textContent = `${I18N.t('finalScore')} ${this.score}`;
@@ -2350,7 +2747,6 @@
             
             skipTutorial() { this.endTutorial(); }
 
-            // Подсчет оставшихся блоков на поле
             countBlocksOnBoard() {
                 let count = 0;
                 for (let y = 0; y < this.gridSize; y++) {
@@ -2361,11 +2757,6 @@
                 return count;
             }
 
-            // Проверка безопасности спавна блока на клетке (x, y):
-            // 1) Коннекторы блока НЕ должны смотреть в стену (край доски).
-            // 2) Коннекторы блока НЕ должны смотреть в сторону соседнего блока, у которого с этой стороны нет коннектора.
-            // 3) Глухие стороны блока НЕ должны перекрывать открытый коннектор уже стоящего соседнего блока.
-            // 4) Открытый коннектор, смотрящий в пустую клетку, не должен упираться в изолированный тупик 1x1.
             isBlockSafeAtPosition(block, x, y) {
                 for (let i = 0; i < 4; i++) {
                     const [dx, dy, dir, opp] = DIRS_4[i];
@@ -2373,7 +2764,6 @@
                     const ny = y + dy;
                     const hasConn = Boolean(block.getConnector(dir));
 
-                    // 1. Запрет направления коннектора в стену
                     if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) {
                         if (hasConn) return false;
                         continue;
@@ -2382,14 +2772,10 @@
                     const neighbor = this.grid[ny][nx];
                     if (neighbor) {
                         const neighborHasOpp = Boolean(neighbor.getConnector(opp));
-                        // 2 и 3. Полная совместимость с соседним блоком:
-                        // нельзя направлять соединение в глухую грань соседа и нельзя закрывать глухой гранью соединение соседа
                         if (hasConn !== neighborHasOpp) {
                             return false;
                         }
                     } else if (hasConn) {
-                        // 4. Проверяем, что пустая клетка (nx, ny), куда смотрит коннектор,
-                        // имеет хотя бы один свободный выход для продолжения петли
                         let availableExits = 0;
                         for (let j = 0; j < 4; j++) {
                             if (j === opp) continue;
@@ -2408,8 +2794,6 @@
                 return true;
             }
 
-            // Создает безопасный блок для авто-спавна на клетке (x, y).
-            // Если ни один тип блока и поворот не подходят без конфликтов с соседями и стенами, возвращает null.
             createSafeBoardBlock(x, y, isGolden = false) {
                 for (let attempt = 0; attempt < 24; attempt++) {
                     const candidate = this.randomBlock(true);
@@ -2425,7 +2809,6 @@
                     }
                 }
 
-                // Пробуем базовые типы блоков во всех поворотах
                 const fallbackTypes = ['CORNER', 'STRAIGHT'];
                 for (const type of fallbackTypes) {
                     const candidate = new Block(type, 0, isGolden);
@@ -2439,7 +2822,6 @@
                 return null;
             }
 
-            // Универсальный спавн стартовых или новых блоков после зачистки поля
             spawnBoardBlocks(targetCount = null, withEffects = false) {
                 const currentCount = this.countBlocksOnBoard();
                 const desiredTotal = targetCount !== null ? targetCount : (2 + Math.floor(Math.random() * 2));
@@ -2472,8 +2854,6 @@
                     [freePositions[i], freePositions[j]] = [freePositions[j], freePositions[i]];
                 }
 
-                // Сортируем кандидатов так, чтобы приоритет отдавался клеткам без стоящих вплотную соседей,
-                // а если соседи есть — строго проверяем совместимость коннекторов
                 freePositions.sort((a, b) => {
                     const countNeighbors = (pos) => {
                         let n = 0;
@@ -2500,7 +2880,6 @@
 
                     this.grid[pos.y][pos.x] = block;
 
-                    // Защита от мгновенного авто-замыкания петли без участия игрока
                     if (this.findLoops().length > 0) {
                         let resolved = false;
                         for (let r = 0; r < 3; r++) {
@@ -2584,7 +2963,6 @@
                 for (let i = 0; i < 3; i++) {
                     this.previewBlocks[i] = this.randomBlock();
                 }
-                // Не более 1 блока-заглушки (ENDCAP) в одном наборе из 3 слотов
                 let endcapCount = 0;
                 for (let i = 0; i < 3; i++) {
                     if (this.previewBlocks[i] && this.previewBlocks[i].type === 'ENDCAP') {
@@ -2632,6 +3010,9 @@
                 document.getElementById('finalScore').textContent = `${I18N.t('finalScore')} ${this.score}`;
                 document.getElementById('finalLoops').textContent = `${I18N.t('finalLoops')} ${this.loops}`;
                 Storage.remove('loopixSave');
+                if (this.highScore > 0) {
+                    leaderboardManager.submitScore(this.highScore);
+                }
                 
                 if (this.isNewRecord) {
                     this.generateShareImage();
@@ -3256,13 +3637,9 @@
 
                 this.rebuildGridCache();
 
-                // Проверяем сколько блоков осталось на поле после очистки петли
                 const remainingBlocks = this.countBlocksOnBoard();
                 const isCleanBoard = !this.tutorialActive && remainingBlocks === 0;
 
-                // Считаем бонусные множители:
-                // - Бонус «Чистое поле»: x2 к очкам за петлю
-                // - Золотой блок в петле: x2 к очкам + ускорение отката молотка на 1000 очков
                 let bonusMultiplier = 1;
                 if (isCleanBoard) {
                     bonusMultiplier *= 2;
@@ -3286,8 +3663,6 @@
                 this.updateScore();
                 this.checkHammerAvailability();
 
-                // После зачистки поля (если осталось меньше 3 блоков) меняем цветовую тему
-                // и спавним новые случайные блоки с проверкой совместимости коннекторов
                 if (!this.tutorialActive && remainingBlocks < 3) {
                     if (this.spawnTimeout) clearTimeout(this.spawnTimeout);
                     const targetCount = 2 + Math.floor(Math.random() * 2);
@@ -3355,7 +3730,6 @@
                 return this.lastLoopCells.has(key) ? this.chainGlowColors.get(key) || '#fff' : null;
             }
 
-            // Мягкая скругленная форма плитки (Squircle / Pebble) с индивидуальными радиусами углов
             traceCustomSquircle(ctx, x0, y0, x1, y1, rTL, rTR, rBR, rBL) {
                 ctx.beginPath();
                 ctx.moveTo(x0 + rTL, y0);
@@ -3370,7 +3744,6 @@
                 ctx.closePath();
             }
 
-            // Плавный обтекаемый внешний контур соединенных плиток
             traceExposedTileBorder(ctx, x0, y0, x1, y1, rTL, rTR, rBR, rBL, connected) {
                 ctx.beginPath();
                 if (!connected[0] && !connected[3] && rTL > 0) {
@@ -3449,7 +3822,6 @@
                     ctx.shadowBlur = glowColor ? 18 : 14;
                 }
                 
-                // 1. Объемная подушечка плитки
                 this.traceCustomSquircle(ctx, x0, y0, x1, y1, rTL, rTR, rBR, rBL);
                 if (glowColor) {
                     ctx.fillStyle = glowColor + '3D';
@@ -3471,7 +3843,6 @@
                 ctx.fill();
                 ctx.shadowBlur = 0;
 
-                // 2. Внешний кант капсулы
                 ctx.strokeStyle = isGolden ? '#ffd700' : baseColor;
                 ctx.lineWidth = glowColor ? 2.6 : (isGolden ? 2.4 : (isHighlighted ? 2.2 : 1.5));
                 ctx.lineCap = 'round';
@@ -3486,7 +3857,6 @@
                 }
                 ctx.globalAlpha = 1.0;
 
-                // 3. Геометрия дорожек внутри блока
                 const topCon = Boolean(block.getConnector(0));
                 const rightCon = Boolean(block.getConnector(1));
                 const botCon = Boolean(block.getConnector(2));
@@ -3554,7 +3924,6 @@
                         addCornerArc(cx, cy + dBot, cx - dLeft, cy, crossR);
                         addCornerArc(cx - dLeft, cy, cx, cy - dTop, crossR);
                     } else if (block.type === 'ENDCAP') {
-                        // Блок-заглушка (тупик с 1 коннектором): линия до центрального энергетического узла
                         if (topCon) { ctx.moveTo(cx, cy - dTop); ctx.lineTo(cx, cy); }
                         else if (rightCon) { ctx.moveTo(cx + dRight, cy); ctx.lineTo(cx, cy); }
                         else if (botCon) { ctx.moveTo(cx, cy + dBot); ctx.lineTo(cx, cy); }
@@ -3562,7 +3931,6 @@
                     }
                 };
 
-                // 4. Отрисовка трехслойной объемной неоновой трубки
                 const haloWidth = glowColor ? 13 : 10.5;
                 const bodyWidth = glowColor ? 7.0 : 5.8;
                 const coreWidth = glowColor ? 2.6 : 2.0;
@@ -3570,27 +3938,23 @@
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
 
-                // Слой 1: Неоновый ореол
                 traceBlockTubes();
                 ctx.strokeStyle = baseColor;
                 ctx.lineWidth = haloWidth;
                 ctx.globalAlpha = glowColor ? 0.55 : 0.26;
                 ctx.stroke();
 
-                // Слой 2: Тело трубки
                 traceBlockTubes();
                 ctx.strokeStyle = baseColor;
                 ctx.lineWidth = bodyWidth;
                 ctx.globalAlpha = 1.0;
                 ctx.stroke();
 
-                // Слой 3: Светящаяся сердцевина
                 traceBlockTubes();
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
                 ctx.lineWidth = coreWidth;
                 ctx.stroke();
 
-                // Для блока-заглушки (ENDCAP) рисуем аккуратную светящуюся капсулу-терминатор в центре
                 if (block.type === 'ENDCAP') {
                     ctx.beginPath();
                     ctx.arc(cx, cy, size * 0.14, 0, Math.PI * 2);
@@ -3601,7 +3965,6 @@
                     ctx.stroke();
                 }
 
-                // Для «Золотого заряженного блока» рисуем золотую звезду-индикаторx2
                 if (isGolden) {
                     const pulse = 0.88 + 0.15 * Math.sin(performance.now() * 0.006);
                     const starX = x + size - pad - 8;
@@ -3628,7 +3991,6 @@
                     ctx.restore();
                 }
 
-                // 5. Светящиеся колечки-порты на открытых концах
                 const showPorts = !glowColor && (isPreview || hasFree);
                 if (showPorts) {
                     const drawOpenPort = (pxPort, pyPort, isBoardFree) => {
@@ -3662,7 +4024,6 @@
 
                 this.ctx.clearRect(0, 0, bs, bs);
                 
-                // Мягкие округлые лунки для клеток поля
                 const slotPad = 3.2;
                 const slotR = Math.round(cs * 0.3);
                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.025)';
@@ -3678,7 +4039,6 @@
                     }
                 }
                 
-                // Подсветка наведения и призрака блока
                 if (this.hoverCell.x >= 0 && this.hoverCell.y >= 0) {
                     const hx = this.hoverCell.x * cs, hy = this.hoverCell.y * cs;
                     const hr = Math.round(cs * 0.3);
@@ -3709,7 +4069,6 @@
                     }
                 }
                 
-                // Отрисовка установленных блоков
                 const hasLoopHighlights = this.lastLoopCells.size > 0;
                 for (let y = 0; y < this.gridSize; y++) {
                     for (let x = 0; x < this.gridSize; x++) {
@@ -3732,7 +4091,6 @@
                     }
                 }
 
-                // Затемнение неактивного поля ПОД сияющей петлей и салютом частиц
                 if (this.boardDimAlpha > 0.005) {
                     this.ctx.fillStyle = `rgba(6, 8, 22, ${this.boardDimAlpha.toFixed(3)})`;
                     this.ctx.fillRect(0, 0, bs, bs);
@@ -3742,7 +4100,6 @@
                     }
                 }
 
-                // Неоновое свечение замкнутых петель поверх затемнения
                 for (let i = this.dyingBlocks.length - 1; i >= 0; i--) {
                     const db = this.dyingBlocks[i];
                     db.alpha -= 0.036 * dtFactor;
@@ -3771,7 +4128,6 @@
                     this.ctx.restore();
                 }
                 
-                // Аддитивные неоновые частицы поверх всех слоев
                 this.ctx.save();
                 this.ctx.globalCompositeOperation = 'lighter';
                 this.ctx.lineCap = 'round';
@@ -3828,6 +4184,7 @@
                     this.highScore = this.score;
                     this.isNewRecord = true;
                     Storage.set('loopixHigh', this.highScore);
+                    leaderboardManager.submitScore(this.highScore);
                 }
                 document.getElementById('score').textContent = this.score;
                 document.getElementById('highScore').textContent = this.highScore;
@@ -3953,6 +4310,7 @@
                 document.getElementById('shareModal').classList.remove('show');
                 document.getElementById('rescueModal').classList.remove('show');
                 document.getElementById('adModal').classList.remove('show');
+                document.getElementById('leaderboardModal').classList.remove('show');
                 this.gameWrapper.style.transform = '';
                 Storage.remove('loopixSave');
                 this.applyTheme('neon', true);
