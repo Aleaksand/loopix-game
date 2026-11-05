@@ -1,0 +1,3975 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <title>Loopix</title>
+    <style>
+        :root {
+            --bg-grad-1: #161838;
+            --bg-grad-2: #252752;
+            --bg-grad-3: #1a1a3e;
+            --board-bg-1: rgba(24, 28, 68, 0.88);
+            --board-bg-2: rgba(10, 11, 28, 0.92);
+            --accent-primary: #4fc3f7;
+            --accent-secondary: #69f0ae;
+            --accent-tertiary: #ffd54f;
+        }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overscroll-behavior: none;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: white;
+            overflow: hidden;
+            background: linear-gradient(180deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 50%, var(--bg-grad-3) 100%);
+            transition: background 0.5s ease;
+            touch-action: manipulation;
+            padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) calc(50px + env(safe-area-inset-bottom, 0px)) env(safe-area-inset-left, 0px);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+        h1 {
+            margin: 0;
+            padding: 15px 0 5px;
+            font-size: clamp(1.8em, 5vh, 2.8em);
+            font-weight: 800;
+            letter-spacing: 6px;
+            color: transparent;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 50%, var(--accent-tertiary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            text-shadow: 0 0 40px rgba(79, 195, 247, 0.45), 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 10;
+            transform: perspective(500px) rotateX(2deg);
+            line-height: 1.1;
+            flex-shrink: 0;
+        }
+        #gameContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(10px, 2vh, 20px);
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            padding: 0 16px 10px;
+            flex: 1;
+        }
+        #gameWrapper {
+            position: relative;
+            display: inline-block;
+            flex-shrink: 0;
+            will-change: transform;
+        }
+        #scoreBoard {
+            display: flex;
+            gap: 22px;
+            font-size: 1em;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 10px 24px;
+            border-radius: 26px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+            flex-shrink: 0;
+        }
+        .score-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+        .score-label {
+            font-size: 0.72em;
+            opacity: 0.65;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .score-value {
+            font-size: 1.5em;
+            font-weight: 800;
+            color: var(--accent-primary);
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.25s;
+        }
+        .score-value.combo {
+            color: var(--accent-tertiary);
+        }
+        .score-value.animate {
+            transform: scale(1.3);
+            color: var(--accent-tertiary);
+            text-shadow: 0 0 20px var(--accent-tertiary);
+        }
+        #mainCanvas {
+            border-radius: 28px;
+            background: radial-gradient(circle at 50% 45%, var(--board-bg-1) 0%, var(--board-bg-2) 100%);
+            box-shadow: 0 12px 38px rgba(0, 0, 0, 0.42), inset 0 0 0 1.5px rgba(255, 255, 255, 0.1);
+            cursor: crosshair;
+            touch-action: none;
+            position: relative;
+            z-index: 1;
+            display: block;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #previewPanel {
+            display: flex;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 14px 20px;
+            border-radius: 28px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+            position: relative;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .preview-slot {
+            width: 72px;
+            height: 72px;
+            border: 2px solid rgba(255, 255, 255, 0.16);
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s, background 0.2s, box-shadow 0.2s, opacity 0.2s;
+            position: relative;
+            background: radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.08), rgba(10, 12, 30, 0.4));
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .preview-slot.selected {
+            background: radial-gradient(circle at 50% 35%, rgba(79, 195, 247, 0.28), rgba(79, 195, 247, 0.12));
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 24px rgba(79, 195, 247, 0.48), inset 0 0 12px rgba(79, 195, 247, 0.2);
+            transform: scale(1.1);
+        }
+        .preview-slot.empty {
+            opacity: 0.25;
+            cursor: default;
+        }
+        .preview-slot.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .preview-slot.spawn-pop {
+            animation: slot-pop 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes slot-pop {
+            0% { transform: scale(0.5); opacity: 0.2; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .preview-slot.tutorial-active {
+            animation: tutorial-pulse 1s ease-in-out infinite;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 30px rgba(79, 195, 247, 0.6);
+        }
+        @keyframes tutorial-pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(79, 195, 247, 0.4); transform: scale(1); }
+            50% { box-shadow: 0 0 40px rgba(79, 195, 247, 0.8); transform: scale(1.05); }
+        }
+        .preview-slot canvas {
+            border-radius: 16px;
+            pointer-events: none;
+        }
+        .preview-slot.dragging {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(79, 195, 247, 0.4);
+            opacity: 0.45;
+            transform: scale(0.95);
+        }
+        #dragFloatingCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 68px;
+            height: 68px;
+            pointer-events: none;
+            z-index: 1500;
+            display: none;
+            filter: drop-shadow(0 10px 24px rgba(79, 195, 247, 0.75));
+            will-change: transform;
+        }
+        #settingsBtn {
+            position: fixed;
+            top: max(16px, env(safe-area-inset-top, 16px));
+            right: max(16px, env(safe-area-inset-right, 16px));
+            width: 46px;
+            height: 46px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            touch-action: manipulation;
+            color: white;
+            backdrop-filter: blur(8px);
+            transition: transform 0.2s, background 0.2s;
+        }
+        #settingsBtn:active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0.95);
+        }
+        .vector-icon {
+            width: 22px;
+            height: 22px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+        }
+        #hammerBtn {
+            position: fixed;
+            top: max(16px, env(safe-area-inset-top, 16px));
+            left: max(16px, env(safe-area-inset-left, 16px));
+            width: 46px;
+            height: 46px;
+            background: linear-gradient(135deg, #ffd54f, #ff8a65);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 16px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, opacity 0.2s, box-shadow 0.3s;
+            z-index: 100;
+            box-shadow: 0 4px 16px rgba(255, 213, 79, 0.45);
+            touch-action: manipulation;
+            color: #1a1a3e;
+        }
+        #hammerBtn:active:not(.disabled) {
+            transform: scale(0.95);
+        }
+        #hammerBtn.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+            color: rgba(255,255,255,0.5);
+        }
+        #hammerBtn .ad-label {
+            font-size: 8px;
+            font-weight: 800;
+            color: #1a1a3e;
+            margin-top: -3px;
+            letter-spacing: 0.5px;
+        }
+        #hammerBtn.disabled .ad-label {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        #hammerIndicator {
+            position: fixed;
+            top: max(72px, calc(env(safe-area-inset-top, 16px) + 56px));
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 213, 79, 0.95);
+            color: #1a1a3e;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            pointer-events: none;
+            z-index: 150;
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            box-shadow: 0 4px 15px rgba(255, 213, 79, 0.4);
+        }
+        #hammerIndicator.show {
+            opacity: 1;
+        }
+        #settingsModal, #gameOverModal, #adModal, #rescueModal, #shareModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        #settingsModal.show, #gameOverModal.show, #adModal.show, #rescueModal.show, #shareModal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: linear-gradient(180deg, #2d2d5a 0%, #1a1a3e 100%);
+            border-radius: 28px;
+            padding: 26px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            min-width: 300px;
+            max-width: 360px;
+            width: 92%;
+            max-height: 88vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .modal-content h2, .modal-content h3 {
+            margin-bottom: 16px;
+            color: white;
+            font-size: 1.45em;
+            font-weight: 700;
+        }
+        .modal-content h3 {
+            color: #ffd54f;
+        }
+        .modal-content p {
+            margin-bottom: 24px;
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        .setting-label {
+            color: white;
+            font-size: 1.05em;
+            font-weight: 500;
+        }
+        .setting-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .volume-slider {
+            width: 120px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(79, 195, 247, 0.5);
+        }
+        .volume-value {
+            min-width: 45px;
+            text-align: right;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9em;
+        }
+        .toggle-switch {
+            width: 48px;
+            height: 26px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .toggle-switch.active {
+            background: var(--accent-primary);
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .toggle-switch.active::after {
+            transform: translateX(22px);
+        }
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-btn {
+            border: none;
+            color: white;
+            padding: 13px 20px;
+            font-size: 0.95em;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: transform 0.15s, background 0.2s;
+            font-weight: 600;
+            width: 100%;
+            touch-action: manipulation;
+            outline: none;
+        }
+        .modal-btn:active {
+            transform: scale(0.97);
+        }
+        .modal-btn.primary {
+            background: linear-gradient(135deg, #4fc3f7, #29b6f6);
+            box-shadow: 0 4px 15px rgba(79, 195, 247, 0.3);
+        }
+        .modal-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .modal-btn.warning {
+            background: linear-gradient(135deg, #ffd54f, #ff8a65);
+            color: #1a1a3e;
+        }
+        .modal-footer {
+            margin-top: 16px;
+            font-size: 0.8em;
+            opacity: 0.5;
+        }
+        .lang-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        .lang-option {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: transform 0.15s, background 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 500;
+            touch-action: manipulation;
+            flex: 1;
+            max-width: 120px;
+        }
+        .lang-option.active {
+            background: var(--accent-primary);
+            color: #1a1a3e;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(79, 195, 247, 0.4);
+        }
+        .lang-option:active {
+            transform: scale(0.95);
+        }
+        #finalScore {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        #finalLoops {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            opacity: 0.7;
+        }
+        #comboPopup {
+            position: fixed;
+            top: 48%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            text-align: center;
+            pointer-events: none;
+            z-index: 500;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 90%;
+        }
+        #comboPopup.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+        #comboPopup.hide {
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            transition: transform 0.3s ease-in, opacity 0.2s ease-in;
+        }
+        .combo-text {
+            font-size: 3.1em;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #ffffff;
+            -webkit-text-stroke: 1.5px rgba(10, 12, 28, 0.75);
+            filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.9));
+        }
+        .combo-count {
+            font-size: 1.5em;
+            margin-top: 6px;
+            font-weight: 800;
+            color: #ffffff;
+            -webkit-text-stroke: 1px rgba(10, 12, 28, 0.7);
+            filter: drop-shadow(0 3px 14px rgba(0, 0, 0, 0.9));
+        }
+        .combo-extra {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 5px 16px;
+            border-radius: 20px;
+            font-size: 1.05em;
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #1a1a3e;
+            background: linear-gradient(135deg, #ffd54f, #69f0ae);
+            box-shadow: 0 4px 20px rgba(255, 213, 79, 0.65);
+        }
+        .combo-extra:empty {
+            display: none;
+        }
+        #tutorialOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2000;
+            display: none;
+            pointer-events: none;
+        }
+        #tutorialOverlay.show {
+            display: block;
+        }
+        .tutorial-step {
+            position: absolute;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            pointer-events: none;
+            width: 100%;
+            padding: 0 16px;
+        }
+        .tutorial-step.active {
+            display: flex;
+        }
+        .tutorial-text {
+            background: rgba(79, 195, 247, 0.95);
+            color: #1a1a3e;
+            padding: 12px 20px;
+            border-radius: 18px;
+            font-size: 1em;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 4px 30px rgba(79, 195, 247, 0.5);
+            animation: float 2s ease-in-out infinite;
+            pointer-events: auto;
+            cursor: pointer;
+            max-width: min(320px, 88vw);
+            line-height: 1.35;
+            white-space: normal;
+            touch-action: manipulation;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        #tutorialSkip {
+            position: absolute;
+            bottom: calc(65px + env(safe-area-inset-bottom, 0px));
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 107, 157, 0.9);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            pointer-events: auto;
+            box-shadow: 0 4px 20px rgba(255, 107, 157, 0.4);
+            white-space: nowrap;
+            touch-action: manipulation;
+            outline: none;
+        }
+        #tutorialSkip:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+        .canvas-tutorial {
+            animation: canvas-pulse 1.5s ease-in-out infinite;
+            cursor: pointer !important;
+        }
+        @keyframes canvas-pulse {
+            0%, 100% { box-shadow: 0 0 30px rgba(79, 195, 247, 0.4); }
+            50% { box-shadow: 0 0 50px rgba(79, 195, 247, 0.8); }
+        }
+        .tutorial-target {
+            position: absolute;
+            border: 3px dashed #ffd54f;
+            border-radius: 18px;
+            box-shadow: 0 0 20px rgba(255, 217, 61, 0.5);
+            animation: target-pulse 1s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes target-pulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+        .hammer-mode {
+            cursor: crosshair !important;
+        }
+        .hammer-target {
+            animation: hammer-pulse 0.5s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(255, 213, 79, 0.8) !important;
+        }
+        @keyframes hammer-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .ad-timer {
+            font-size: 2em;
+            color: #4fc3f7;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .slow-motion-active {
+            animation: slowMotionPulse 0.5s ease-out;
+        }
+        @keyframes slowMotionPulse {
+            0% { box-shadow: 0 0 0 rgba(79, 195, 247, 0); }
+            50% { box-shadow: 0 0 50px rgba(79, 195, 247, 0.5); }
+            100% { box-shadow: 0 0 0 rgba(79, 195, 247, 0); }
+        }
+        #shareCanvas {
+            width: 100%;
+            max-width: 280px;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .share-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .share-btn {
+            background: linear-gradient(135deg, #4fc3f7, #29b6f6);
+            border: none;
+            color: white;
+            padding: 12px 18px;
+            font-size: 0.9em;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 15px rgba(79, 195, 247, 0.4);
+            touch-action: manipulation;
+            outline: none;
+            flex: 1;
+            min-width: 100px;
+            justify-content: center;
+        }
+        .share-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: none;
+        }
+        .share-btn:active {
+            transform: scale(0.95);
+        }
+        .new-record-badge {
+            background: linear-gradient(135deg, #ffd54f, #ff8a65);
+            color: #1a1a3e;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 20px rgba(255, 213, 79, 0.5);
+            animation: pulse-glow 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 4px 20px rgba(255, 213, 79, 0.5); }
+            50% { box-shadow: 0 8px 30px rgba(255, 213, 79, 0.8); }
+        }
+        #yandexBanner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: calc(50px + env(safe-area-inset-bottom, 0px));
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            backdrop-filter: blur(5px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+        }
+        
+        /* Loader */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #0b0f2a, #000);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        .loader-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .loader-grid {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background-image: linear-gradient(#1a1f4d 1px, transparent 1px),
+                              linear-gradient(90deg, #1a1f4d 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: moveGrid 10s linear infinite;
+            opacity: 0.3;
+        }
+        @keyframes moveGrid {
+            from { transform: translate(0,0); }
+            to { transform: translate(-60px,-60px); }
+        }
+        .loader-logo {
+            position: relative;
+            z-index: 2;
+            width: 140px;
+            height: 140px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: pulse 2s infinite;
+        }
+        .loader-logo-fallback {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, rgba(79, 195, 247, 0.2), rgba(105, 240, 174, 0.2));
+            border: 2px solid rgba(79, 195, 247, 0.5);
+            border-radius: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 40px rgba(79, 195, 247, 0.45);
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 5px #00f); }
+            50% { transform: scale(1.08); filter: drop-shadow(0 0 20px #0ff); }
+            100% { transform: scale(1); }
+        }
+        .loader-lines {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+        }
+        .loader-line {
+            position: absolute;
+            height: 4px;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #00f, #0ff, #ff0);
+            box-shadow: 0 0 10px #0ff;
+            animation: draw 2s infinite;
+        }
+        .loader-line.l1 { top: 50px; left: 0; width: 0; }
+        .loader-line.l2 { top: 100px; left: 50px; width: 0; animation-delay: 0.5s; }
+        .loader-line.l3 { top: 150px; left: 20px; width: 0; animation-delay: 1s; }
+        @keyframes draw {
+            0% { width: 0; opacity: 0; }
+            50% { width: 150px; opacity: 1; }
+            100% { width: 0; opacity: 0; }
+        }
+        .loader-title {
+            position: absolute;
+            bottom: 80px;
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: 5px;
+            background: linear-gradient(90deg, #4fc3f7, #69f0ae, #ffd54f);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: glow 2s infinite;
+        }
+        @keyframes glow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        button, div, span, canvas {
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loader -->
+    <div id="loader">
+        <div class="loader-content">
+            <div class="loader-grid"></div>
+            <div class="loader-logo">
+                <div class="loader-logo-fallback">
+                    <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+                        <defs>
+                            <linearGradient id="loopGrad" x1="0" y1="0" x2="72" y2="72" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#4fc3f7"/>
+                                <stop offset="50%" stop-color="#69f0ae"/>
+                                <stop offset="100%" stop-color="#ffd54f"/>
+                            </linearGradient>
+                        </defs>
+                        <circle cx="36" cy="36" r="22" stroke="url(#loopGrad)" stroke-width="8" stroke-linecap="round"/>
+                        <circle cx="36" cy="36" r="22" stroke="#ffffff" stroke-opacity="0.75" stroke-width="2.5"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="loader-lines">
+                <div class="loader-line l1"></div>
+                <div class="loader-line l2"></div>
+                <div class="loader-line l3"></div>
+            </div>
+            <div class="loader-title">LOOPIX</div>
+        </div>
+    </div>
+    
+    <h1>LOOPIX</h1>
+    <div id="settingsBtn" title="Настройки">
+        <svg class="vector-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </div>
+    <div id="hammerBtn" title="Удалить блок (смотреть рекламу)">
+        <svg class="vector-icon" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M15 12l-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9"></path><path d="M17.64 15L22 10.64l-6-6L11.64 9"></path><path d="m15 5 3 3"></path></svg>
+        <span class="ad-label">AD</span>
+    </div>
+    <div id="hammerIndicator">🔨 Выбери блок для удаления</div>
+    <div id="gameContainer">
+        <div id="scoreBoard">
+            <div class="score-item">
+                <span class="score-label" data-i18n="score">Счёт</span>
+                <span class="score-value" id="score">0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label" data-i18n="record">Рекорд</span>
+                <span class="score-value" id="highScore">0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label" data-i18n="maxCombo">Макс Комбо</span>
+                <span class="score-value combo" id="maxCombo">0</span>
+            </div>
+        </div>
+        <div id="gameWrapper">
+            <canvas id="mainCanvas" width="300" height="300"></canvas>
+        </div>
+        <div id="previewPanel">
+            <div class="preview-slot has-block" id="slot0" data-index="0">
+                <canvas id="preview0" width="56" height="56"></canvas>
+            </div>
+            <div class="preview-slot has-block" id="slot1" data-index="1">
+                <canvas id="preview1" width="56" height="56"></canvas>
+            </div>
+            <div class="preview-slot has-block" id="slot2" data-index="2">
+                <canvas id="preview2" width="56" height="56"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="dragFloatingCanvas" width="68" height="68"></canvas>
+    
+    <div id="comboPopup">
+        <div class="combo-text" id="comboText">КРУТО!</div>
+        <div class="combo-count" id="comboCount">КОМБО x4</div>
+        <div class="combo-extra" id="comboExtra"></div>
+    </div>
+    
+    <div id="tutorialOverlay">
+        <div class="tutorial-step" id="step1">
+            <div class="tutorial-text" data-i18n="tutorialStep1">Выбери блок</div>
+        </div>
+        <div class="tutorial-step" id="step2">
+            <div class="tutorial-text" data-i18n="tutorialStep2">Свайпни или нажми чтобы повернуть</div>
+        </div>
+        <div class="tutorial-step" id="step3">
+            <div class="tutorial-text" data-i18n="tutorialStep3">Ставь сюда</div>
+        </div>
+        <div id="tutorialTarget" class="tutorial-target"></div>
+        <button id="tutorialSkip" data-i18n="skipTutorial">Пропустить обучение</button>
+    </div>
+
+    <div id="settingsModal">
+        <div class="modal-content">
+            <h2 data-i18n="settings">Настройки</h2>
+            
+            <div class="lang-selector">
+                <div class="lang-option" data-lang="ru">Русский</div>
+                <div class="lang-option" data-lang="en">English</div>
+            </div>
+            
+            <div class="setting-item">
+                <span class="setting-label" data-i18n="sound">Звук</span>
+                <div class="setting-control">
+                    <div class="toggle-switch active" id="soundToggle"></div>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <span class="setting-label" data-i18n="volume">Громкость</span>
+                <div class="setting-control">
+                    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+                    <span class="volume-value" id="volumeValue">70%</span>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <span class="setting-label" data-i18n="vibration">Вибрация</span>
+                <div class="setting-control">
+                    <div class="toggle-switch active" id="vibrationToggle"></div>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="modal-btn primary" id="newGameBtn" data-i18n="newGame">Начать заново</button>
+                <button class="modal-btn secondary" id="closeSettingsBtn" data-i18n="close">Закрыть</button>
+            </div>
+            
+            <div class="modal-footer">Loopix v1.2</div>
+        </div>
+    </div>
+    
+    <div id="adModal">
+        <div class="modal-content">
+            <h3 data-i18n="adTitle">🔨 Реклама</h3>
+            <p data-i18n="adText">Просмотрите рекламу, чтобы удалить блок</p>
+            <div class="ad-timer" id="adTimer">5</div>
+            <button class="modal-btn secondary" id="cancelAdBtn" data-i18n="cancel">Отмена</button>
+        </div>
+    </div>
+    
+    <div id="rescueModal">
+        <div class="modal-content">
+            <h3 data-i18n="lastChance">Последний шанс</h3>
+            <p data-i18n="noMoves">Нет ходов. Смотреть рекламу и очистить до 3 блоков молотком?</p>
+            <div class="modal-actions">
+                <button class="modal-btn warning" id="rescueHammerBtn" data-i18n="watchAd">Смотреть рекламу</button>
+                <button class="modal-btn secondary" id="declineRescueBtn" data-i18n="newGameShort">Новая игра</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="gameOverModal">
+        <div class="modal-content" id="gameOverContent">
+            <h2>GAME OVER</h2>
+            <div id="finalScore">Счёт: 0</div>
+            <div id="finalLoops">Петель: 0</div>
+            <div class="modal-actions">
+                <button class="modal-btn primary" id="playAgainBtn" data-i18n="playAgain">Начать заново</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="shareModal">
+        <div class="modal-content">
+            <div class="new-record-badge" data-i18n="newRecord">🏆 НОВЫЙ РЕКОРД 🏆</div>
+            <canvas id="shareCanvas" width="1080" height="1080"></canvas>
+            <div class="share-buttons">
+                <button class="share-btn" id="downloadBtn" data-i18n="download">📥 Скачать</button>
+                <button class="share-btn" id="shareBtn" data-i18n="share">📤 Поделиться</button>
+                <button class="share-btn secondary" id="closeShareBtn" data-i18n="close">✕ Закрыть</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="yandexBanner" data-i18n="adBanner">Рекламный баннер</div>
+    
+    <script>
+        // Безопасная обертка для работы с localStorage в Android WebView
+        const Storage = {
+            get(key, fallback = null) {
+                try {
+                    const val = window.localStorage.getItem(key);
+                    return val !== null ? val : fallback;
+                } catch (e) {
+                    return fallback;
+                }
+            },
+            set(key, value) {
+                try {
+                    window.localStorage.setItem(key, String(value));
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            },
+            remove(key) {
+                try {
+                    window.localStorage.removeItem(key);
+                } catch (e) {}
+            }
+        };
+
+        // Константные векторы направлений (0 аллокаций в игровом цикле)
+        const DIRS_4 = [
+            [0, -1, 0, 2],
+            [1, 0, 1, 3],
+            [0, 1, 2, 0],
+            [-1, 0, 3, 1]
+        ];
+
+        function detectSystemLanguage() {
+            const navLang = navigator.language || navigator.userLanguage || 'ru';
+            const lang = navLang.toLowerCase().split('-')[0];
+            const supportedLangs = ['ru', 'en'];
+            return supportedLangs.includes(lang) ? lang : 'ru';
+        }
+        
+        const I18N = {
+            currentLang: Storage.get('loopixLang') || detectSystemLanguage(),
+            
+            translations: {
+                ru: {
+                    score: 'Счёт',
+                    record: 'Рекорд',
+                    maxCombo: 'Макс Комбо',
+                    comboCool: 'КРУТО!',
+                    comboGreat: 'ОТЛИЧНО!',
+                    comboSuper: 'СУПЕР!',
+                    comboWow: 'ВАУ!',
+                    comboNice: 'КЛАСС!',
+                    comboGood: 'МОЛОДЕЦ!',
+                    comboImba: 'ИМБА!',
+                    comboFire: 'ОГОНЬ!',
+                    comboGenius: 'ГЕНИЙ!',
+                    comboAwesome: 'ШИКАРНО!',
+                    comboLegend: 'ЛЕГЕНДА!',
+                    comboMachine: 'МАШИНА!',
+                    comboMega: 'МЕГА-ХОРОШ!',
+                    comboBuya: 'БУЙЯ!',
+                    comboSolo: 'СОЛО!',
+                    comboHere: 'СЮДА!',
+                    comboUltra: 'УЛЬТРА-ХОРОШ!',
+                    comboTimes: 'КОМБО x',
+                    cleanBoardBonus: '✨ ЧИСТОЕ ПОЛЕ x2!',
+                    goldenBonus: '⭐ ЗОЛОТОЙ БОНУС x2!',
+                    cleanAndGoldenBonus: '✨ ЧИСТОЕ ПОЛЕ + ⭐ ЗОЛОТО x4!',
+                    tutorialStep1: 'Выбери блок',
+                    tutorialStep2: 'Свайпни или нажми чтобы повернуть',
+                    tutorialStep3: 'Ставь сюда',
+                    skipTutorial: 'Пропустить обучение',
+                    settings: 'Настройки',
+                    themesTitle: 'Цветовые темы',
+                    statTotalLoops: 'Всего петель',
+                    statCleanBoards: 'Чистых полей',
+                    theme_neon: 'Неоновая классика',
+                    theme_cyberpunk: 'Киберпанк',
+                    theme_matrix: 'Матрица',
+                    theme_retrowave: 'Ретровейв',
+                    theme_emerald: 'Изумруд',
+                    theme_gold: 'Золото и Обсидиан',
+                    req_default: 'Доступна сразу',
+                    req_cyberpunk: 'Собери 10 петель или рекорд 500',
+                    req_matrix: 'Собери 25 петель или рекорд 1500',
+                    req_retrowave: 'Макс Комбо x8 или рекорд 3000',
+                    req_emerald: '3 Чистых поля или 50 петель',
+                    req_gold: 'Рекорд 5000 очков или 100 петель',
+                    sound: 'Звук',
+                    volume: 'Громкость',
+                    vibration: 'Вибрация',
+                    newGame: 'Начать заново',
+                    close: 'Закрыть',
+                    adTitle: '🔨 Реклама',
+                    adText: 'Просмотрите рекламу, чтобы удалить блок',
+                    cancel: 'Отмена',
+                    lastChance: 'Последний шанс',
+                    noMoves: 'Нет ходов. Смотреть рекламу и очистить до 3 блоков молотком?',
+                    watchAd: 'Смотреть рекламу',
+                    newGameShort: 'Новая игра',
+                    playAgain: 'Начать заново',
+                    newRecord: '🏆 НОВЫЙ РЕКОРД 🏆',
+                    download: '📥 Скачать',
+                    share: '📤 Поделиться',
+                    adBanner: 'Рекламный баннер',
+                    hammerHint: 'Удалить блок (смотреть рекламу)',
+                    hammerIndicator: '🔨 Выбери блок для удаления',
+                    finalScore: 'Счёт:',
+                    finalLoops: 'Петель:',
+                    points: 'очков',
+                    shareText: 'Я набрал {score} очков в Loopix! А ты так сможешь?',
+                    shareTitle: 'Loopix - Новый рекорд!',
+                    canYouBeat: 'А ТЫ ТАК СМОЖЕШЬ?'
+                },
+                en: {
+                    score: 'Score',
+                    record: 'Record',
+                    maxCombo: 'Max Combo',
+                    comboCool: 'COOL!',
+                    comboGreat: 'GREAT!',
+                    comboSuper: 'SUPER!',
+                    comboWow: 'WOW!',
+                    comboNice: 'NICE!',
+                    comboGood: 'GOOD!',
+                    comboImba: 'IMBA!',
+                    comboFire: 'FIRE!',
+                    comboGenius: 'GENIUS!',
+                    comboAwesome: 'AWESOME!',
+                    comboLegend: 'LEGEND!',
+                    comboMachine: 'MACHINE!',
+                    comboMega: 'MEGA!',
+                    comboBuya: 'BOOYAH!',
+                    comboSolo: 'SOLO!',
+                    comboHere: 'NICE!',
+                    comboUltra: 'ULTRA!',
+                    comboTimes: 'COMBO x',
+                    cleanBoardBonus: '✨ ALL CLEAR x2!',
+                    goldenBonus: '⭐ GOLDEN BONUS x2!',
+                    cleanAndGoldenBonus: '✨ ALL CLEAR + ⭐ GOLD x4!',
+                    tutorialStep1: 'Select a block',
+                    tutorialStep2: 'Swipe or tap to rotate',
+                    tutorialStep3: 'Place here',
+                    skipTutorial: 'Skip tutorial',
+                    settings: 'Settings',
+                    themesTitle: 'Color Themes',
+                    statTotalLoops: 'Total Loops',
+                    statCleanBoards: 'All Clears',
+                    theme_neon: 'Classic Neon',
+                    theme_cyberpunk: 'Cyberpunk',
+                    theme_matrix: 'Matrix',
+                    theme_retrowave: 'Retrowave',
+                    theme_emerald: 'Emerald',
+                    theme_gold: 'Gold & Obsidian',
+                    req_default: 'Unlocked by default',
+                    req_cyberpunk: 'Clear 10 loops or score 500',
+                    req_matrix: 'Clear 25 loops or score 1500',
+                    req_retrowave: 'Max Combo x8 or score 3000',
+                    req_emerald: '3 All Clears or 50 loops',
+                    req_gold: 'Score 5000 or 100 loops',
+                    sound: 'Sound',
+                    volume: 'Volume',
+                    vibration: 'Vibration',
+                    newGame: 'New Game',
+                    close: 'Close',
+                    adTitle: '🔨 Ad',
+                    adText: 'Watch an ad to remove a block',
+                    cancel: 'Cancel',
+                    lastChance: 'Last Chance',
+                    noMoves: 'No moves left. Watch ad to clear up to 3 blocks?',
+                    watchAd: 'Watch Ad',
+                    newGameShort: 'New Game',
+                    playAgain: 'Play Again',
+                    newRecord: '🏆 NEW RECORD 🏆',
+                    download: '📥 Download',
+                    share: '📤 Share',
+                    adBanner: 'Advertisement',
+                    hammerHint: 'Remove block (watch ad)',
+                    hammerIndicator: '🔨 Select a block to remove',
+                    finalScore: 'Score:',
+                    finalLoops: 'Loops:',
+                    points: 'points',
+                    shareText: 'I scored {score} points in Loopix! Can you beat that?',
+                    shareTitle: 'Loopix - New Record!',
+                    canYouBeat: 'CAN YOU BEAT THAT?'
+                }
+            },
+            
+            t(key, params = {}) {
+                let text = this.translations[this.currentLang]?.[key] || this.translations['ru'][key] || key;
+                for (const [param, value] of Object.entries(params)) {
+                    text = text.replace(`{${param}}`, value);
+                }
+                return text;
+            },
+            
+            setLanguage(lang) {
+                if (this.translations[lang]) {
+                    this.currentLang = lang;
+                    Storage.set('loopixLang', lang);
+                    this.updateUI();
+                    return true;
+                }
+                return false;
+            },
+            
+            updateUI() {
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    el.textContent = this.t(key);
+                });
+                
+                document.querySelectorAll('.lang-option').forEach(opt => {
+                    opt.classList.toggle('active', opt.dataset.lang === this.currentLang);
+                });
+                
+                if (typeof game !== 'undefined' && game.updateUITexts) {
+                    game.updateUITexts();
+                }
+            }
+        };
+        
+        const getComboPhrases = () => [
+            I18N.t('comboCool'), I18N.t('comboGreat'), I18N.t('comboSuper'), 
+            I18N.t('comboWow'), I18N.t('comboNice'), I18N.t('comboGood'),
+            I18N.t('comboImba'), I18N.t('comboFire'), I18N.t('comboGenius'), 
+            I18N.t('comboAwesome'), I18N.t('comboLegend'), I18N.t('comboMachine'),
+            I18N.t('comboMega'), I18N.t('comboBuya'), I18N.t('comboSolo'),
+            I18N.t('comboHere'), I18N.t('comboUltra')
+        ];
+        
+        (function() {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('portrait').catch(() => {});
+            }
+        })();
+        
+        function hideLoader() {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.transition = 'opacity 0.5s';
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 500);
+            }
+        }
+        
+        document.addEventListener('deviceready', () => {
+            setTimeout(hideLoader, 800);
+        }, false);
+        
+        window.addEventListener('load', () => {
+            if (typeof cordova === 'undefined') {
+                setTimeout(hideLoader, 800);
+            }
+        });
+        
+        const YaGames = {
+            init: () => Promise.resolve({
+                getAdv: () => ({
+                    showFullscreenAdv: () => Promise.resolve(),
+                    showRewardedVideo: () => Promise.resolve({ type: 'rewarded', rewarded: true }),
+                    showBannerAdv: () => Promise.resolve()
+                }),
+                getLeaderboards: () => ({
+                    setLeaderboardScore: () => Promise.resolve()
+                }),
+                getPlayer: () => ({
+                    getName: () => 'Player'
+                })
+            })
+        };
+        
+        class AudioManager {
+            constructor() {
+                this.context = null;
+                this.enabled = Storage.get('loopixSound') !== 'false';
+                this.volume = parseFloat(Storage.get('loopixVolume', '0.6'));
+                this.initialized = false;
+                this.unlocked = false;
+                this.updateUI();
+                this.setupAutoplayUnlock();
+            }
+            
+            init() {
+                if (this.context) return;
+                try {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) {
+                        this.context = new AudioCtx();
+                        this.initialized = true;
+                    }
+                } catch (e) {}
+            }
+
+            setupAutoplayUnlock() {
+                const unlock = async () => {
+                    if (this.unlocked) return;
+                    this.init();
+                    if (!this.context) return;
+                    try {
+                        if (this.context.state === 'suspended') {
+                            await this.context.resume();
+                        }
+                        const buffer = this.context.createBuffer(1, 1, 22050);
+                        const source = this.context.createBufferSource();
+                        source.buffer = buffer;
+                        source.connect(this.context.destination);
+                        source.start(0);
+                        if (this.context.state === 'running') {
+                            this.unlocked = true;
+                            window.removeEventListener('pointerdown', unlock, true);
+                            window.removeEventListener('touchstart', unlock, true);
+                        }
+                    } catch (e) {}
+                };
+                window.addEventListener('pointerdown', unlock, true);
+                window.addEventListener('touchstart', unlock, true);
+            }
+            
+            async ensureContext() {
+                if (!this.enabled) return false;
+                if (!this.context) this.init();
+                if (this.context && this.context.state === 'suspended') {
+                    try {
+                        await this.context.resume();
+                    } catch (e) {}
+                }
+                return Boolean(this.context && this.context.state === 'running');
+            }
+            
+            playPlace(blockType = 'STRAIGHT') {
+                if (!this.enabled) return;
+                this.ensureContext().then(running => {
+                    if (!running) return;
+                    const now = this.context.currentTime;
+                    const osc1 = this.context.createOscillator();
+                    const osc2 = this.context.createOscillator();
+                    const gain = this.context.createGain();
+                    const filter = this.context.createBiquadFilter();
+                    const sounds = {
+                        'STRAIGHT': { freq1: 440, freq2: 550, duration: 0.1 },
+                        'CORNER': { freq1: 523, freq2: 659, duration: 0.12 },
+                        'T_SHAPE': { freq1: 587, freq2: 698, duration: 0.11 },
+                        'CROSS': { freq1: 659, freq2: 783, duration: 0.1 },
+                        'ENDCAP': { freq1: 740, freq2: 880, duration: 0.11 }
+                    };
+                    const sound = sounds[blockType] || sounds['STRAIGHT'];
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 2000;
+                    osc1.type = 'sine';
+                    osc2.type = 'sine';
+                    osc1.frequency.value = sound.freq1;
+                    osc2.frequency.value = sound.freq2;
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(this.volume * 0.15, now + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + sound.duration);
+                    osc1.connect(filter);
+                    osc2.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.context.destination);
+                    osc2.onended = () => {
+                        osc1.disconnect();
+                        osc2.disconnect();
+                        filter.disconnect();
+                        gain.disconnect();
+                    };
+                    osc1.start(now);
+                    osc2.start(now);
+                    osc1.stop(now + sound.duration);
+                    osc2.stop(now + sound.duration);
+                });
+            }
+
+            playSpawnPop() {
+                if (!this.enabled) return;
+                this.ensureContext().then(running => {
+                    if (!running) return;
+                    const now = this.context.currentTime;
+                    const osc = this.context.createOscillator();
+                    const gain = this.context.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(360, now);
+                    osc.frequency.exponentialRampToValueAtTime(620, now + 0.09);
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(this.volume * 0.11, now + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+                    osc.connect(gain);
+                    gain.connect(this.context.destination);
+                    osc.onended = () => {
+                        osc.disconnect();
+                        gain.disconnect();
+                    };
+                    osc.start(now);
+                    osc.stop(now + 0.09);
+                });
+            }
+            
+            playRotate() {
+                if (!this.enabled) return;
+                this.ensureContext().then(running => {
+                    if (!running) return;
+                    const now = this.context.currentTime;
+                    const osc = this.context.createOscillator();
+                    const gain = this.context.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = 880;
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(this.volume * 0.1, now + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+                    osc.connect(gain);
+                    gain.connect(this.context.destination);
+                    osc.onended = () => {
+                        osc.disconnect();
+                        gain.disconnect();
+                    };
+                    osc.start(now);
+                    osc.stop(now + 0.06);
+                });
+            }
+            
+            playCombo(size, isCleanOrGolden = false) {
+                if (!this.enabled) return;
+                this.ensureContext().then(running => {
+                    if (!running) return;
+                    const now = this.context.currentTime;
+                    const chordNotes = (size >= 10 || isCleanOrGolden)
+                        ? [523.25, 659.25, 783.99, 1046.50, 1318.51]
+                        : size >= 7 ? [523.25, 659.25, 783.99]
+                        : size >= 5 ? [523.25, 659.25] : [523.25];
+                    chordNotes.forEach((freq, i) => {
+                        const osc = this.context.createOscillator();
+                        const gain = this.context.createGain();
+                        const filter = this.context.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.frequency.value = 1800;
+                        osc.type = i === 0 ? 'sine' : 'triangle';
+                        osc.frequency.value = freq;
+                        const startTime = now + i * 0.045;
+                        gain.gain.setValueAtTime(0, startTime);
+                        gain.gain.linearRampToValueAtTime(this.volume * 0.2, startTime + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.34);
+                        osc.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(this.context.destination);
+                        osc.onended = () => {
+                            osc.disconnect();
+                            filter.disconnect();
+                            gain.disconnect();
+                        };
+                        osc.start(startTime);
+                        osc.stop(startTime + 0.34);
+                    });
+                });
+            }
+            
+            playClear() {
+                if (!this.enabled) return;
+                this.ensureContext().then(running => {
+                    if (!running) return;
+                    const now = this.context.currentTime;
+                    const osc = this.context.createOscillator();
+                    const gain = this.context.createGain();
+                    const filter = this.context.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 1000;
+                    osc.type = 'sine';
+                    osc.frequency.value = 330;
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(this.volume * 0.15, now + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.context.destination);
+                    osc.onended = () => {
+                        osc.disconnect();
+                        filter.disconnect();
+                        gain.disconnect();
+                    };
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                });
+            }
+            
+            toggle() {
+                this.enabled = !this.enabled;
+                Storage.set('loopixSound', this.enabled);
+                this.updateUI();
+                if (this.enabled && !this.initialized) this.init();
+            }
+            
+            setVolume(value) {
+                this.volume = value / 100;
+                Storage.set('loopixVolume', this.volume);
+                document.getElementById('volumeValue').textContent = value + '%';
+            }
+            
+            updateUI() {
+                const toggle = document.getElementById('soundToggle');
+                const slider = document.getElementById('volumeSlider');
+                if (this.enabled) {
+                    toggle.classList.add('active');
+                    slider.disabled = false;
+                } else {
+                    toggle.classList.remove('active');
+                    slider.disabled = true;
+                }
+                const volumePercent = Math.round(this.volume * 100);
+                slider.value = volumePercent;
+                document.getElementById('volumeValue').textContent = volumePercent + '%';
+            }
+        }
+        
+        class VibrationManager {
+            constructor() {
+                this.enabled = Storage.get('loopixVibration') !== 'false';
+                this.updateUI();
+            }
+            
+            vibrate(pattern) {
+                if (!this.enabled) return;
+                try {
+                    if (typeof navigator.vibrate === 'function') navigator.vibrate(pattern);
+                } catch (e) {}
+            }
+            
+            comboVibration(size) {
+                if (!this.enabled) return;
+                const pattern = size >= 10 ? [50, 40, 50, 40, 100] :
+                               size >= 7 ? [40, 30, 60, 30, 80] :
+                               size >= 5 ? [30, 30, 50] : [20, 20, 40];
+                this.vibrate(pattern);
+            }
+            
+            lightVibration() { this.vibrate(10); }
+            
+            toggle() {
+                this.enabled = !this.enabled;
+                Storage.set('loopixVibration', this.enabled);
+                this.updateUI();
+            }
+            
+            updateUI() {
+                const toggle = document.getElementById('vibrationToggle');
+                toggle.classList.toggle('active', this.enabled);
+            }
+        }
+        
+        const audioManager = new AudioManager();
+        const vibrationManager = new VibrationManager();
+
+        // 6 визуальных цветовых тем, которые автоматически сменяют друг друга после зачистки поля
+        const THEMES = {
+            neon: {
+                id: 'neon',
+                bg: ['#161838', '#252752', '#1a1a3e'],
+                boardBg: ['rgba(24, 28, 68, 0.88)', 'rgba(10, 11, 28, 0.92)'],
+                accents: ['#4fc3f7', '#69f0ae', '#ffd54f'],
+                blocks: {
+                    STRAIGHT: '#4fc3f7',
+                    CORNER: '#69f0ae',
+                    T_SHAPE: '#ffd54f',
+                    CROSS: '#ff8a65',
+                    ENDCAP: '#e040fb'
+                }
+            },
+            cyberpunk: {
+                id: 'cyberpunk',
+                bg: ['#120428', '#290947', '#0b031a'],
+                boardBg: ['rgba(38, 8, 72, 0.88)', 'rgba(14, 3, 28, 0.94)'],
+                accents: ['#00f0ff', '#ff007f', '#fcee09'],
+                blocks: {
+                    STRAIGHT: '#00f0ff',
+                    CORNER: '#ff007f',
+                    T_SHAPE: '#fcee09',
+                    CROSS: '#ff5500',
+                    ENDCAP: '#b829ff'
+                }
+            },
+            matrix: {
+                id: 'matrix',
+                bg: ['#031409', '#072914', '#020d05'],
+                boardBg: ['rgba(8, 42, 20, 0.88)', 'rgba(2, 16, 7, 0.94)'],
+                accents: ['#00ff66', '#69f0ae', '#b9f6ca'],
+                blocks: {
+                    STRAIGHT: '#00e676',
+                    CORNER: '#76ff03',
+                    T_SHAPE: '#1de9b6',
+                    CROSS: '#c6ff00',
+                    ENDCAP: '#00b0ff'
+                }
+            },
+            retrowave: {
+                id: 'retrowave',
+                bg: ['#1b072e', '#3c0e4c', '#180526'],
+                boardBg: ['rgba(52, 14, 70, 0.88)', 'rgba(22, 6, 36, 0.94)'],
+                accents: ['#ff6ec7', '#ffb347', '#00e5ff'],
+                blocks: {
+                    STRAIGHT: '#ff6ec7',
+                    CORNER: '#00e5ff',
+                    T_SHAPE: '#ffb347',
+                    CROSS: '#ff3d7f',
+                    ENDCAP: '#a163f7'
+                }
+            },
+            emerald: {
+                id: 'emerald',
+                bg: ['#042126', '#0a3d42', '#04181c'],
+                boardBg: ['rgba(12, 56, 62, 0.88)', 'rgba(4, 24, 28, 0.94)'],
+                accents: ['#26ffe6', '#80ffdb', '#ffd166'],
+                blocks: {
+                    STRAIGHT: '#26ffe6',
+                    CORNER: '#56cfe1',
+                    T_SHAPE: '#ffd166',
+                    CROSS: '#ff7b54',
+                    ENDCAP: '#72efdd'
+                }
+            },
+            gold: {
+                id: 'gold',
+                bg: ['#14120e', '#262118', '#0d0c09'],
+                boardBg: ['rgba(38, 33, 24, 0.9)', 'rgba(14, 12, 9, 0.95)'],
+                accents: ['#ffd700', '#ffae42', '#fff4b8'],
+                blocks: {
+                    STRAIGHT: '#ffd700',
+                    CORNER: '#ffb703',
+                    T_SHAPE: '#fb8500',
+                    CROSS: '#ff595e',
+                    ENDCAP: '#e5e5e5'
+                }
+            }
+        };
+        
+        const COLORS = {
+            blocks: { ...THEMES.neon.blocks },
+            chainColors: {
+                small: ['#4fc3f7', '#69f0ae', '#ffd54f'],
+                medium: ['#ff6b9d', '#4fc3f7', '#69f0ae'],
+                large: ['#ffd54f', '#ff8a65', '#ff6b9d'],
+                epic: ['#e040fb', '#7c4dff', '#448aff'],
+                legendary: ['#ff1744', '#f50057', '#d500f9']
+            }
+        };
+        
+        const BLOCK_PRICES = { 'STRAIGHT': 2, 'CORNER': 2, 'T_SHAPE': 4, 'ENDCAP': 6, 'CROSS': 8 };
+        const COMBO_COLORS = ['#4fc3f7', '#69f0ae', '#ffd54f', '#ff8a65', '#ff6b9d', '#e040fb', '#7c4dff'];
+        
+        const BLOCK_TYPES = {
+            EMPTY: { connectorCount: 0, connectors: [0,0,0,0] },
+            STRAIGHT: { connectorCount: 2, variants: [{ connectors: [1,0,1,0] },{ connectors: [0,1,0,1] }] },
+            CORNER: { connectorCount: 2, variants: [{ connectors: [1,1,0,0] },{ connectors: [0,1,1,0] },{ connectors: [0,0,1,1] },{ connectors: [1,0,0,1] }] },
+            T_SHAPE: { connectorCount: 3, variants: [{ connectors: [1,1,1,0] },{ connectors: [0,1,1,1] },{ connectors: [1,0,1,1] },{ connectors: [1,1,0,1] }] },
+            CROSS: { connectorCount: 4, connectors: [1,1,1,1] },
+            ENDCAP: { connectorCount: 1, variants: [{ connectors: [1,0,0,0] },{ connectors: [0,1,0,0] },{ connectors: [0,0,1,0] },{ connectors: [0,0,0,1] }] }
+        };
+        
+        class Block {
+            constructor(type, variant = 0, isGolden = false) {
+                this.type = type;
+                this.variant = variant;
+                this.rotation = 0;
+                this.isGolden = Boolean(isGolden);
+                this.price = BLOCK_PRICES[type] || 0;
+                if (type === 'CROSS') this.connectors = [...BLOCK_TYPES.CROSS.connectors];
+                else if (type === 'EMPTY') this.connectors = [0,0,0,0];
+                else this.connectors = [...BLOCK_TYPES[type].variants[variant].connectors];
+                this.color = COLORS.blocks[type] || '#4fc3f7';
+            }
+            rotate() {
+                const [top, right, bottom, left] = this.connectors;
+                this.connectors = [left, top, right, bottom];
+                this.rotation = (this.rotation + 90) % 360;
+            }
+            getConnector(direction) { return this.connectors[direction]; }
+            getConnectorCount() { return this.connectors.filter(c => c).length; }
+            refreshColor() {
+                this.color = COLORS.blocks[this.type] || '#4fc3f7';
+            }
+        }
+        
+        class Loopix {
+            constructor() {
+                this.canvas = document.getElementById('mainCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.dragFloatingCanvas = document.getElementById('dragFloatingCanvas');
+                this.dragFloatingCtx = this.dragFloatingCanvas.getContext('2d');
+                this.gridSize = 6;
+                this.boardCssSize = 300;
+                this.cellSize = 50;
+                this.previewCssSize = 56;
+                this.grid = [];
+                this.gridCache = [];
+                this.score = 0;
+                this.displayScore = 0;
+                this.highScore = parseInt(Storage.get('loopixHigh', '0'), 10) || 0;
+                this.loops = 0;
+                this.combo = 1;
+                this.maxCombo = parseInt(Storage.get('loopixMaxCombo', '0'), 10) || 0;
+                this.currentTheme = Storage.get('loopixTheme', 'neon');
+                if (!THEMES[this.currentTheme]) this.currentTheme = 'neon';
+
+                this.previewBlocks = [null, null, null];
+                this.selectedSlot = null;
+                this.hoverCell = { x: -1, y: -1 };
+                this.isGameOver = false;
+                this.isPaused = false;
+                this.rafId = null;
+                this.lastFrameTime = 0;
+                this.particles = [];
+                this.dyingBlocks = [];
+                this.boardDimAlpha = 0;
+                this.lastLoopCells = new Set();
+                this.chainGlowColors = new Map();
+                this.tutorialStep = 0;
+                this.tutorialActive = false;
+                this.difficultyLevel = 0;
+                this.hammerMode = false;
+                this.hammerUsed = false;
+                this.hammerAvailable = true;
+                this.isRescueHammer = false;
+                this.nextHammerAt = 2000;
+                this.lastClickTime = 0;
+                this.clickDelay = 120;
+                this.shakeIntensity = 0;
+                this.shakeDecay = 0.8;
+                this.gameWrapper = document.getElementById('gameWrapper');
+                this.blockScaleAnimations = new Map();
+                this.slowMotionActive = false;
+                this.slowMoTimeout = null;
+                this.spawnTimeout = null;
+                this.timeScale = 1;
+
+                this.dragActive = false;
+                this.dragSlot = -1;
+                this.dragStartSlot = -1;
+                this.dragStartX = 0;
+                this.dragStartY = 0;
+                this.dragRotated = false;
+                this.isDraggingToBoard = false;
+                this.dragThreshold = 20;
+
+                this.canvasPointerDown = false;
+                this.canvasStartX = 0;
+                this.canvasStartY = 0;
+                this.isCanvasSliding = false;
+
+                this.isNewRecord = false;
+                this.adInterval = null;
+                
+                this.applyTheme(this.currentTheme, false);
+                this.setupHighDPICanvas();
+                this.init();
+                this.setupEvents();
+                this.setupUIEvents();
+                this.setupMobileLifecycle();
+                this.setupAutoSave();
+                I18N.updateUI();
+                this.updateUITexts();
+                requestAnimationFrame(() => this.setupHighDPICanvas());
+            }
+
+            applyTheme(themeId, persist = true) {
+                const theme = THEMES[themeId] || THEMES.neon;
+                this.currentTheme = theme.id;
+                if (persist) Storage.set('loopixTheme', theme.id);
+
+                const root = document.documentElement;
+                root.style.setProperty('--bg-grad-1', theme.bg[0]);
+                root.style.setProperty('--bg-grad-2', theme.bg[1]);
+                root.style.setProperty('--bg-grad-3', theme.bg[2]);
+                root.style.setProperty('--board-bg-1', theme.boardBg[0]);
+                root.style.setProperty('--board-bg-2', theme.boardBg[1]);
+                root.style.setProperty('--accent-primary', theme.accents[0]);
+                root.style.setProperty('--accent-secondary', theme.accents[1]);
+                root.style.setProperty('--accent-tertiary', theme.accents[2]);
+
+                Object.assign(COLORS.blocks, theme.blocks);
+
+                if (this.grid.length > 0) {
+                    for (let y = 0; y < this.gridSize; y++) {
+                        for (let x = 0; x < this.gridSize; x++) {
+                            if (this.grid[y][x]) this.grid[y][x].refreshColor();
+                        }
+                    }
+                }
+                for (let i = 0; i < 3; i++) {
+                    if (this.previewBlocks[i]) this.previewBlocks[i].refreshColor();
+                }
+                this.renderPreviews();
+            }
+
+            cycleNextTheme() {
+                const themeKeys = Object.keys(THEMES);
+                const currentIdx = themeKeys.indexOf(this.currentTheme);
+                const nextIdx = (currentIdx + 1) % themeKeys.length;
+                this.applyTheme(themeKeys[nextIdx], true);
+            }
+
+            setupHighDPICanvas() {
+                const dpr = Math.min(window.devicePixelRatio || 1, 3);
+                const availW = window.innerWidth - 32;
+
+                const scoreEl = document.getElementById('scoreBoard');
+                const previewEl = document.getElementById('previewPanel');
+                const titleEl = document.querySelector('h1');
+                const bannerEl = document.getElementById('yandexBanner');
+
+                let availH = window.innerHeight - 310;
+                if (scoreEl && previewEl && titleEl && bannerEl) {
+                    const topUsed = scoreEl.getBoundingClientRect().bottom;
+                    const bannerTop = bannerEl.getBoundingClientRect().top || (window.innerHeight - 50);
+                    const previewH = previewEl.getBoundingClientRect().height || 100;
+                    const computedFreeH = bannerTop - topUsed - previewH - 36;
+                    if (computedFreeH > 180) {
+                        availH = computedFreeH;
+                    }
+                }
+
+                const rawSize = Math.max(228, Math.min(availW, availH, 354));
+                this.boardCssSize = Math.floor(rawSize / this.gridSize) * this.gridSize;
+                this.cellSize = this.boardCssSize / this.gridSize;
+
+                this.canvas.style.width = `${this.boardCssSize}px`;
+                this.canvas.style.height = `${this.boardCssSize}px`;
+                this.canvas.width = Math.round(this.boardCssSize * dpr);
+                this.canvas.height = Math.round(this.boardCssSize * dpr);
+                this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+                const pSize = this.previewCssSize;
+                for (let i = 0; i < 3; i++) {
+                    const pCanvas = document.getElementById(`preview${i}`);
+                    if (!pCanvas) continue;
+                    pCanvas.style.width = `${pSize}px`;
+                    pCanvas.style.height = `${pSize}px`;
+                    pCanvas.width = Math.round(pSize * dpr);
+                    pCanvas.height = Math.round(pSize * dpr);
+                    const pCtx = pCanvas.getContext('2d');
+                    pCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                }
+
+                if (this.dragFloatingCanvas) {
+                    this.dragFloatingCanvas.style.width = '68px';
+                    this.dragFloatingCanvas.style.height = '68px';
+                    this.dragFloatingCanvas.width = Math.round(68 * dpr);
+                    this.dragFloatingCanvas.height = Math.round(68 * dpr);
+                    this.dragFloatingCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                }
+
+                if (this.grid.length > 0) {
+                    this.renderPreviews();
+                    if (this.tutorialActive) this.updateTutorialStep();
+                }
+            }
+            
+            setupUIEvents() {
+                window.addEventListener('resize', () => this.setupHighDPICanvas());
+
+                document.getElementById('settingsBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.openSettings();
+                });
+                document.getElementById('hammerBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.useHammer();
+                });
+                document.getElementById('soundToggle').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.toggleSound();
+                });
+                document.getElementById('volumeSlider').addEventListener('input', (e) => {
+                    this.setVolume(e.target.value);
+                });
+                document.getElementById('vibrationToggle').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.toggleVibration();
+                });
+                document.getElementById('newGameBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.newGame(); this.closeSettings();
+                });
+                document.getElementById('closeSettingsBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.closeSettings();
+                });
+                document.getElementById('cancelAdBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.cancelAd();
+                });
+                document.getElementById('rescueHammerBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.useRescueHammer();
+                });
+                document.getElementById('declineRescueBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.declineRescue();
+                });
+                document.getElementById('playAgainBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.newGame();
+                });
+                document.getElementById('downloadBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.downloadShareImage();
+                });
+                document.getElementById('shareBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.shareImage();
+                });
+                document.getElementById('closeShareBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.closeShareModal();
+                });
+                document.getElementById('tutorialSkip').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.skipTutorial();
+                });
+                document.querySelectorAll('.lang-option').forEach(opt => {
+                    opt.addEventListener('click', (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        this.setLanguage(opt.dataset.lang);
+                    });
+                });
+                document.querySelectorAll('.tutorial-text').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        if (this.tutorialActive) this.nextTutorialStep();
+                    });
+                });
+            }
+
+            setupMobileLifecycle() {
+                window.addEventListener('contextmenu', (e) => e.preventDefault());
+
+                const onPause = () => {
+                    if (this.isPaused) return;
+                    this.isPaused = true;
+                    if (this.rafId) {
+                        cancelAnimationFrame(this.rafId);
+                        this.rafId = null;
+                    }
+                    if (!this.isGameOver && !this.tutorialActive) {
+                        this.saveGame();
+                    }
+                    if (audioManager.context && audioManager.context.state === 'running') {
+                        audioManager.context.suspend().catch(() => {});
+                    }
+                };
+
+                const onResume = () => {
+                    if (!this.isPaused) return;
+                    this.isPaused = false;
+                    this.lastFrameTime = performance.now();
+                    if (audioManager.enabled && audioManager.context && audioManager.context.state === 'suspended') {
+                        audioManager.context.resume().catch(() => {});
+                    }
+                    this.rafId = requestAnimationFrame((t) => this.animate(t));
+                };
+
+                document.addEventListener('visibilitychange', () => {
+                    document.hidden ? onPause() : onResume();
+                });
+                window.addEventListener('pagehide', onPause);
+                window.addEventListener('blur', onPause);
+                window.addEventListener('focus', onResume);
+                document.addEventListener('pause', onPause, false);
+                document.addEventListener('resume', onResume, false);
+
+                const handleBackButton = (e) => {
+                    if (e && e.preventDefault) e.preventDefault();
+
+                    if (this.tutorialActive) {
+                        this.skipTutorial();
+                        return;
+                    }
+
+                    const shareModal = document.getElementById('shareModal');
+                    const settingsModal = document.getElementById('settingsModal');
+                    const adModal = document.getElementById('adModal');
+                    const rescueModal = document.getElementById('rescueModal');
+                    const gameOverModal = document.getElementById('gameOverModal');
+
+                    if (shareModal.classList.contains('show')) {
+                        this.closeShareModal();
+                    } else if (adModal.classList.contains('show')) {
+                        this.cancelAd();
+                    } else if (settingsModal.classList.contains('show')) {
+                        this.closeSettings();
+                    } else if (rescueModal.classList.contains('show')) {
+                        this.declineRescue();
+                    } else if (gameOverModal.classList.contains('show')) {
+                        this.newGame();
+                    } else if (this.hammerMode) {
+                        this.hammerMode = false;
+                        this.hammerUsed = false;
+                        this.hammerAvailable = true;
+                        document.getElementById('hammerBtn').classList.remove('disabled');
+                        document.getElementById('hammerIndicator').classList.remove('show');
+                        this.canvas.classList.remove('hammer-mode', 'hammer-target');
+                        this.saveGame();
+                        if (!this.canPlaceAny()) {
+                            this.isRescueHammer = false;
+                            this.checkGameOver();
+                        }
+                    } else if (!this.isGameOver) {
+                        this.openSettings();
+                    }
+                };
+
+                document.addEventListener('backbutton', handleBackButton, false);
+            }
+            
+            updateUITexts() {
+                document.getElementById('hammerBtn').title = I18N.t('hammerHint');
+                document.getElementById('hammerIndicator').textContent = I18N.t('hammerIndicator');
+                if (this.isGameOver) {
+                    document.getElementById('finalScore').textContent = `${I18N.t('finalScore')} ${this.score}`;
+                    document.getElementById('finalLoops').textContent = `${I18N.t('finalLoops')} ${this.loops}`;
+                }
+                if (this.tutorialActive) {
+                    this.updateTutorialStep();
+                }
+            }
+            
+            setLanguage(lang) {
+                if (I18N.setLanguage(lang)) {
+                    this.updateUITexts();
+                    this.updateScore();
+                }
+            }
+            
+            canProcessClick() {
+                const now = Date.now();
+                if (now - this.lastClickTime < this.clickDelay) return false;
+                this.lastClickTime = now;
+                return true;
+            }
+            
+            init() {
+                if (!this.loadGame()) {
+                    this.updateScore();
+                    this.setupGrid();
+                    this.checkTutorial();
+                }
+                this.lastFrameTime = performance.now();
+                this.rafId = requestAnimationFrame((t) => this.animate(t));
+            }
+            
+            setupAutoSave() {
+                setInterval(() => {
+                    if (!this.isGameOver && !this.tutorialActive && !this.isPaused) this.saveGame();
+                }, 10000);
+                window.addEventListener('beforeunload', () => {
+                    if (!this.isGameOver && !this.tutorialActive) this.saveGame();
+                });
+            }
+            
+            saveGame() {
+                if (this.isGameOver || this.tutorialActive) return;
+                const saveData = {
+                    version: 3,
+                    theme: this.currentTheme,
+                    score: this.score,
+                    loops: this.loops,
+                    combo: this.combo,
+                    maxCombo: this.maxCombo,
+                    difficultyLevel: this.difficultyLevel,
+                    hammerMode: this.hammerMode,
+                    isRescueHammer: this.isRescueHammer,
+                    hammerUsed: this.hammerUsed,
+                    hammerAvailable: this.hammerAvailable,
+                    nextHammerAt: this.nextHammerAt,
+                    grid: this.grid.map(row => row.map(block => block ? {
+                        type: block.type, variant: block.variant, rotation: block.rotation, isGolden: block.isGolden
+                    } : null)),
+                    previewBlocks: this.previewBlocks.map(block => block ? {
+                        type: block.type, variant: block.variant, rotation: block.rotation, isGolden: block.isGolden
+                    } : null),
+                    selectedSlot: this.selectedSlot
+                };
+                Storage.set('loopixSave', JSON.stringify(saveData));
+            }
+            
+            loadGame() {
+                const saved = Storage.get('loopixSave');
+                if (!saved) return false;
+                try {
+                    const data = JSON.parse(saved);
+                    if (!data || !Array.isArray(data.grid) || data.grid.length !== this.gridSize || !Array.isArray(data.previewBlocks)) {
+                        return false;
+                    }
+                    if (data.theme && THEMES[data.theme]) {
+                        this.applyTheme(data.theme, false);
+                    }
+                    this.score = Number(data.score) || 0;
+                    this.displayScore = this.score;
+                    this.loops = Number(data.loops) || 0;
+                    this.combo = Number(data.combo) || 1;
+                    this.maxCombo = Math.max(this.maxCombo, Number(data.maxCombo) || 0);
+                    this.difficultyLevel = Number(data.difficultyLevel) || 0;
+                    this.hammerMode = Boolean(data.hammerMode);
+                    this.isRescueHammer = Boolean(data.isRescueHammer);
+                    this.hammerUsed = Boolean(data.hammerUsed);
+                    this.hammerAvailable = data.hammerAvailable !== false;
+                    this.nextHammerAt = Number(data.nextHammerAt) || 2000;
+
+                    this.grid = data.grid.map(row => row.map(blockData => {
+                        if (!blockData || !BLOCK_TYPES[blockData.type]) return null;
+                        const block = new Block(blockData.type, blockData.variant || 0, Boolean(blockData.isGolden));
+                        const rotSteps = Math.floor((blockData.rotation || 0) / 90) % 4;
+                        for (let r = 0; r < rotSteps; r++) block.rotate();
+                        return block;
+                    }));
+
+                    this.previewBlocks = data.previewBlocks.map(blockData => {
+                        if (!blockData || !BLOCK_TYPES[blockData.type]) return null;
+                        const block = new Block(blockData.type, blockData.variant || 0, Boolean(blockData.isGolden));
+                        const rotSteps = Math.floor((blockData.rotation || 0) / 90) % 4;
+                        for (let r = 0; r < rotSteps; r++) block.rotate();
+                        return block;
+                    });
+
+                    if (this.previewBlocks.every(b => b === null)) {
+                        for (let i = 0; i < 3; i++) {
+                            this.previewBlocks[i] = this.randomBlock();
+                        }
+                        if (!this.previewBlocks.some(b => b && b.type === 'CORNER')) {
+                            const replaceIdx = Math.floor(Math.random() * 3);
+                            const variant = Math.floor(Math.random() * BLOCK_TYPES.CORNER.variants.length);
+                            this.previewBlocks[replaceIdx] = new Block('CORNER', variant);
+                        }
+                    }
+
+                    this.selectedSlot = (typeof data.selectedSlot === 'number' && this.previewBlocks[data.selectedSlot]) ? data.selectedSlot : null;
+                    this.rebuildGridCache();
+                    this.updateSlotClasses();
+                    this.renderPreviews();
+                    this.updateScore();
+
+                    document.getElementById('hammerBtn').classList.toggle('disabled', this.hammerUsed);
+                    document.getElementById('hammerIndicator').classList.toggle('show', this.hammerMode);
+                    this.canvas.classList.toggle('hammer-mode', this.hammerMode);
+
+                    if (!this.hammerMode && !this.canPlaceAny()) {
+                        this.checkGameOver();
+                    }
+                    return true;
+                } catch (e) {
+                    Storage.remove('loopixSave');
+                    return false;
+                }
+            }
+            
+            updateDifficultyByScore() {
+                if (this.score >= 5000) this.difficultyLevel = 3;
+                else if (this.score >= 2000) this.difficultyLevel = 2;
+                else if (this.score >= 500) this.difficultyLevel = 1;
+                else this.difficultyLevel = 0;
+            }
+            
+            checkHammerAvailability() {
+                if (this.hammerUsed && this.score >= this.nextHammerAt) {
+                    this.hammerUsed = false;
+                    this.hammerAvailable = true;
+                    this.nextHammerAt = this.score + 2000;
+                    document.getElementById('hammerBtn').classList.remove('disabled');
+                }
+            }
+            
+            toggleSound() { audioManager.toggle(); }
+            setVolume(v) { audioManager.setVolume(v); }
+            toggleVibration() { vibrationManager.toggle(); }
+            
+            addScreenShake(intensity) { this.shakeIntensity = Math.min(intensity, 15); }
+            
+            updateScreenShake(dtFactor) {
+                if (this.shakeIntensity > 0.5) {
+                    const dx = (Math.random() - 0.5) * this.shakeIntensity * 2;
+                    const dy = (Math.random() - 0.5) * this.shakeIntensity * 2;
+                    this.gameWrapper.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+                    this.shakeIntensity *= Math.pow(this.shakeDecay, dtFactor);
+                } else if (this.shakeIntensity !== 0) {
+                    this.shakeIntensity = 0;
+                    this.gameWrapper.style.transform = '';
+                }
+            }
+            
+            addBlockScaleEffect(x, y) { this.blockScaleAnimations.set(`${x},${y}`, 1.28); }
+            
+            updateBlockScaleAnimations(dtFactor) {
+                for (const [key, scale] of this.blockScaleAnimations) {
+                    const newScale = 1 + (scale - 1) * Math.pow(0.75, dtFactor);
+                    if (newScale > 1.02) this.blockScaleAnimations.set(key, newScale);
+                    else this.blockScaleAnimations.delete(key);
+                }
+            }
+            
+            activateSlowMotion(duration = 1000, timeScale = 0.3) {
+                if (this.slowMoTimeout) clearTimeout(this.slowMoTimeout);
+                this.slowMotionActive = true;
+                this.timeScale = timeScale;
+                this.canvas.classList.add('slow-motion-active');
+                this.slowMoTimeout = setTimeout(() => {
+                    this.slowMotionActive = false;
+                    this.timeScale = 1;
+                    this.canvas.classList.remove('slow-motion-active');
+                    this.slowMoTimeout = null;
+                }, duration);
+            }
+            
+            animateScore(targetScore) {
+                if (this.scoreAnimationFrame) cancelAnimationFrame(this.scoreAnimationFrame);
+                const startScore = this.displayScore;
+                const diff = targetScore - startScore;
+                const startTime = performance.now();
+                const scoreElement = document.getElementById('score');
+                scoreElement.classList.add('animate');
+                setTimeout(() => scoreElement.classList.remove('animate'), 300);
+                
+                const step = (currentTime) => {
+                    const progress = Math.min((currentTime - startTime) / 500, 1);
+                    this.displayScore = Math.floor(startScore + diff * (1 - Math.pow(1 - progress, 4)));
+                    scoreElement.textContent = this.displayScore;
+                    if (progress < 1) this.scoreAnimationFrame = requestAnimationFrame(step);
+                    else { this.displayScore = targetScore; scoreElement.textContent = targetScore; }
+                };
+                this.scoreAnimationFrame = requestAnimationFrame(step);
+            }
+            
+            checkTutorial() {
+                if (!Storage.get('loopixTutorial')) this.startTutorial();
+                else { this.placeInitialBlocks(); this.generateNewSet(); }
+            }
+            
+            startTutorial() {
+                this.tutorialActive = true;
+                this.tutorialStep = 1;
+                document.getElementById('tutorialOverlay').classList.add('show');
+                this.setupTutorialField();
+                setTimeout(() => this.updateTutorialStep(), 100);
+            }
+            
+            setupTutorialField() {
+                this.difficultyLevel = 0;
+                this.setupGrid();
+                this.grid[2][2] = new Block('CORNER', 1);
+                this.grid[2][3] = new Block('CORNER', 2);
+                this.grid[3][3] = new Block('CORNER', 3);
+                this.previewBlocks[0] = new Block('CORNER', 1);
+                this.previewBlocks[1] = null;
+                this.previewBlocks[2] = null;
+                this.selectedSlot = null;
+                this.rebuildGridCache();
+                this.updateSlotClasses();
+                requestAnimationFrame(() => { this.renderPreviews(); });
+            }
+            
+            updateTutorialStep() {
+                if (!this.tutorialActive) return;
+                document.querySelectorAll('.tutorial-step').forEach(el => el.classList.remove('active'));
+                const activeStepEl = document.getElementById('step' + this.tutorialStep);
+                if (activeStepEl) activeStepEl.classList.add('active');
+
+                const panel = document.getElementById('previewPanel');
+                const canvas = document.getElementById('mainCanvas');
+                const slots = document.querySelectorAll('.preview-slot');
+                const target = document.getElementById('tutorialTarget');
+                
+                slots.forEach(slot => { slot.classList.remove('tutorial-active', 'disabled'); slot.style.pointerEvents = 'none'; });
+                canvas.classList.remove('canvas-tutorial');
+                canvas.style.pointerEvents = 'none';
+                target.style.display = 'none';
+                
+                if (this.tutorialStep === 1) {
+                    const step1 = document.getElementById('step1');
+                    const rect = panel.getBoundingClientRect();
+                    const stepH = step1.offsetHeight || 50;
+                    step1.style.top = Math.max(12, rect.top - stepH - 14) + 'px';
+                    step1.style.left = '50%';
+                    step1.style.transform = 'translateX(-50%)';
+                    document.getElementById('slot0').classList.add('tutorial-active');
+                    document.getElementById('slot0').style.pointerEvents = 'auto';
+                } else if (this.tutorialStep === 2) {
+                    const step2 = document.getElementById('step2');
+                    const rect = document.getElementById('slot0').getBoundingClientRect();
+                    const stepH = step2.offsetHeight || 56;
+                    step2.style.top = Math.max(12, rect.top - stepH - 14) + 'px';
+                    step2.style.left = '50%';
+                    step2.style.transform = 'translateX(-50%)';
+                    slots.forEach((s, i) => { if (i !== 0) s.classList.add('disabled'); });
+                    const slot0 = document.getElementById('slot0');
+                    slot0.classList.add('tutorial-active', 'selected');
+                    slot0.style.pointerEvents = 'auto';
+                } else if (this.tutorialStep === 3) {
+                    const step3 = document.getElementById('step3');
+                    const canvasRect = canvas.getBoundingClientRect();
+                    step3.style.top = (canvasRect.top + 10) + 'px';
+                    step3.style.left = '50%';
+                    step3.style.transform = 'translateX(-50%)';
+                    slots.forEach((s, i) => {
+                        if (i !== 0) s.classList.add('disabled');
+                    });
+                    document.getElementById('slot0').style.pointerEvents = 'auto';
+                    canvas.classList.add('canvas-tutorial');
+                    canvas.style.pointerEvents = 'auto';
+                    target.style.width = this.cellSize + 'px';
+                    target.style.height = this.cellSize + 'px';
+                    target.style.left = (canvasRect.left + 2 * this.cellSize) + 'px';
+                    target.style.top = (canvasRect.top + 3 * this.cellSize) + 'px';
+                    target.style.display = 'block';
+                }
+            }
+            
+            nextTutorialStep() {
+                this.tutorialStep++;
+                if (this.tutorialStep > 3) this.endTutorial();
+                else this.updateTutorialStep();
+            }
+            
+            endTutorial() {
+                this.tutorialActive = false;
+                document.getElementById('tutorialOverlay').classList.remove('show');
+                document.getElementById('tutorialTarget').style.display = 'none';
+                Storage.set('loopixTutorial', 'true');
+                document.querySelectorAll('.preview-slot').forEach(s => {
+                    s.classList.remove('tutorial-active', 'disabled');
+                    s.style.pointerEvents = '';
+                });
+                const canvas = document.getElementById('mainCanvas');
+                canvas.classList.remove('canvas-tutorial');
+                canvas.style.pointerEvents = '';
+                this.difficultyLevel = 0;
+                this.setupGrid();
+                this.placeInitialBlocks();
+                this.generateNewSet();
+                this.saveGame();
+            }
+            
+            skipTutorial() { this.endTutorial(); }
+
+            // Подсчет оставшихся блоков на поле
+            countBlocksOnBoard() {
+                let count = 0;
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        if (this.grid[y][x]) count++;
+                    }
+                }
+                return count;
+            }
+
+            // Проверка безопасности спавна блока на клетке (x, y):
+            // 1) Коннекторы блока НЕ должны смотреть в стену (край доски).
+            // 2) Коннекторы блока НЕ должны смотреть в сторону соседнего блока, у которого с этой стороны нет коннектора.
+            // 3) Глухие стороны блока НЕ должны перекрывать открытый коннектор уже стоящего соседнего блока.
+            // 4) Открытый коннектор, смотрящий в пустую клетку, не должен упираться в изолированный тупик 1x1.
+            isBlockSafeAtPosition(block, x, y) {
+                for (let i = 0; i < 4; i++) {
+                    const [dx, dy, dir, opp] = DIRS_4[i];
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    const hasConn = Boolean(block.getConnector(dir));
+
+                    // 1. Запрет направления коннектора в стену
+                    if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) {
+                        if (hasConn) return false;
+                        continue;
+                    }
+
+                    const neighbor = this.grid[ny][nx];
+                    if (neighbor) {
+                        const neighborHasOpp = Boolean(neighbor.getConnector(opp));
+                        // 2 и 3. Полная совместимость с соседним блоком:
+                        // нельзя направлять соединение в глухую грань соседа и нельзя закрывать глухой гранью соединение соседа
+                        if (hasConn !== neighborHasOpp) {
+                            return false;
+                        }
+                    } else if (hasConn) {
+                        // 4. Проверяем, что пустая клетка (nx, ny), куда смотрит коннектор,
+                        // имеет хотя бы один свободный выход для продолжения петли
+                        let availableExits = 0;
+                        for (let j = 0; j < 4; j++) {
+                            if (j === opp) continue;
+                            const [ndx, ndy, , nopp] = DIRS_4[j];
+                            const nnx = nx + ndx;
+                            const nny = ny + ndy;
+                            if (nnx < 0 || nnx >= this.gridSize || nny < 0 || nny >= this.gridSize) continue;
+                            const nextNeighbor = this.grid[nny][nnx];
+                            if (!nextNeighbor || Boolean(nextNeighbor.getConnector(nopp))) {
+                                availableExits++;
+                            }
+                        }
+                        if (availableExits === 0) return false;
+                    }
+                }
+                return true;
+            }
+
+            // Создает безопасный блок для авто-спавна на клетке (x, y).
+            // Если ни один тип блока и поворот не подходят без конфликтов с соседями и стенами, возвращает null.
+            createSafeBoardBlock(x, y, isGolden = false) {
+                for (let attempt = 0; attempt < 24; attempt++) {
+                    const candidate = this.randomBlock(true);
+                    candidate.isGolden = isGolden;
+                    const startRot = Math.floor(Math.random() * 4);
+                    for (let r = 0; r < startRot; r++) candidate.rotate();
+
+                    for (let r = 0; r < 4; r++) {
+                        if (this.isBlockSafeAtPosition(candidate, x, y)) {
+                            return candidate;
+                        }
+                        candidate.rotate();
+                    }
+                }
+
+                // Пробуем базовые типы блоков во всех поворотах
+                const fallbackTypes = ['CORNER', 'STRAIGHT'];
+                for (const type of fallbackTypes) {
+                    const candidate = new Block(type, 0, isGolden);
+                    for (let r = 0; r < 4; r++) {
+                        if (this.isBlockSafeAtPosition(candidate, x, y)) {
+                            return candidate;
+                        }
+                        candidate.rotate();
+                    }
+                }
+                return null;
+            }
+
+            // Универсальный спавн стартовых или новых блоков после зачистки поля
+            spawnBoardBlocks(targetCount = null, withEffects = false) {
+                const currentCount = this.countBlocksOnBoard();
+                const desiredTotal = targetCount !== null ? targetCount : (2 + Math.floor(Math.random() * 2));
+                const toSpawn = Math.max(0, desiredTotal - currentCount);
+                if (toSpawn <= 0) return;
+
+                const allowEdges = this.difficultyLevel >= 1;
+                const minCoord = allowEdges ? 0 : 1;
+                const maxCoord = allowEdges ? this.gridSize - 1 : this.gridSize - 2;
+
+                const freePositions = [];
+                for (let y = minCoord; y <= maxCoord; y++) {
+                    for (let x = minCoord; x <= maxCoord; x++) {
+                        if (!this.grid[y][x]) freePositions.push({ x, y });
+                    }
+                }
+
+                if (freePositions.length < toSpawn) {
+                    for (let y = 0; y < this.gridSize; y++) {
+                        for (let x = 0; x < this.gridSize; x++) {
+                            if (!this.grid[y][x] && !freePositions.some(p => p.x === x && p.y === y)) {
+                                freePositions.push({ x, y });
+                            }
+                        }
+                    }
+                }
+
+                for (let i = freePositions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [freePositions[i], freePositions[j]] = [freePositions[j], freePositions[i]];
+                }
+
+                // Сортируем кандидатов так, чтобы приоритет отдавался клеткам без стоящих вплотную соседей,
+                // а если соседи есть — строго проверяем совместимость коннекторов
+                freePositions.sort((a, b) => {
+                    const countNeighbors = (pos) => {
+                        let n = 0;
+                        for (let i = 0; i < 4; i++) {
+                            const nx = pos.x + DIRS_4[i][0];
+                            const ny = pos.y + DIRS_4[i][1];
+                            if (nx >= 0 && nx < this.gridSize && ny >= 0 && ny < this.gridSize && this.grid[ny][nx]) n++;
+                        }
+                        return n;
+                    };
+                    return countNeighbors(a) - countNeighbors(b);
+                });
+
+                const hasGoldenOnBoard = this.grid.some(row => row.some(b => b && b.isGolden));
+                const shouldSpawnGolden = !hasGoldenOnBoard && Math.random() < 0.25;
+                let goldenAssigned = false;
+
+                let spawnedCount = 0;
+                for (let i = 0; i < freePositions.length && spawnedCount < toSpawn; i++) {
+                    const pos = freePositions[i];
+                    const isGolden = shouldSpawnGolden && !goldenAssigned;
+                    const block = this.createSafeBoardBlock(pos.x, pos.y, isGolden);
+                    if (!block) continue;
+
+                    this.grid[pos.y][pos.x] = block;
+
+                    // Защита от мгновенного авто-замыкания петли без участия игрока
+                    if (this.findLoops().length > 0) {
+                        let resolved = false;
+                        for (let r = 0; r < 3; r++) {
+                            block.rotate();
+                            if (this.isBlockSafeAtPosition(block, pos.x, pos.y) && this.findLoops().length === 0) {
+                                resolved = true;
+                                break;
+                            }
+                        }
+                        if (!resolved) {
+                            this.grid[pos.y][pos.x] = null;
+                            continue;
+                        }
+                    }
+
+                    if (isGolden) goldenAssigned = true;
+                    spawnedCount++;
+
+                    if (withEffects) {
+                        this.addBlockScaleEffect(pos.x, pos.y);
+                        if (isGolden) {
+                            this.createExplosion(pos.x, pos.y, '#ffd700', 10);
+                        }
+                    }
+                }
+
+                this.rebuildGridCache();
+                if (withEffects && spawnedCount > 0) {
+                    audioManager.playSpawnPop();
+                }
+            }
+            
+            placeInitialBlocks() {
+                this.spawnBoardBlocks(2 + Math.floor(Math.random() * 2), true);
+            }
+            
+            openSettings() { 
+                if (!this.canProcessClick() || this.tutorialActive) return;
+                document.getElementById('settingsModal').classList.add('show');
+                I18N.updateUI();
+            }
+            closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
+            
+            setupGrid() {
+                this.grid = Array(this.gridSize).fill().map(() => Array(this.gridSize).fill(null));
+                this.rebuildGridCache();
+            }
+
+            rebuildGridCache() {
+                if (this.gridCache.length !== this.gridSize) {
+                    this.gridCache = Array(this.gridSize).fill().map(() =>
+                        Array(this.gridSize).fill().map(() => ({
+                            conn: [false, false, false, false],
+                            hasFree: false
+                        }))
+                    );
+                }
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        const cellCache = this.gridCache[y][x];
+                        const block = this.grid[y][x];
+                        if (!block) {
+                            cellCache.conn[0] = cellCache.conn[1] = cellCache.conn[2] = cellCache.conn[3] = false;
+                            cellCache.hasFree = false;
+                            continue;
+                        }
+                        let freeFound = false;
+                        for (let d = 0; d < 4; d++) {
+                            const hasConn = this.hasConnection(x, y, d);
+                            cellCache.conn[d] = hasConn;
+                            if (block.getConnector(d) && !hasConn) {
+                                freeFound = true;
+                            }
+                        }
+                        cellCache.hasFree = freeFound;
+                    }
+                }
+            }
+            
+            generateNewSet(animateSlots = false) {
+                for (let i = 0; i < 3; i++) {
+                    this.previewBlocks[i] = this.randomBlock();
+                }
+                // Не более 1 блока-заглушки (ENDCAP) в одном наборе из 3 слотов
+                let endcapCount = 0;
+                for (let i = 0; i < 3; i++) {
+                    if (this.previewBlocks[i] && this.previewBlocks[i].type === 'ENDCAP') {
+                        endcapCount++;
+                        if (endcapCount > 1) {
+                            const variant = Math.floor(Math.random() * BLOCK_TYPES.CORNER.variants.length);
+                            this.previewBlocks[i] = new Block('CORNER', variant);
+                        }
+                    }
+                }
+                if (!this.previewBlocks.some(b => b && b.type === 'CORNER')) {
+                    const replaceIdx = Math.floor(Math.random() * 3);
+                    const variant = Math.floor(Math.random() * BLOCK_TYPES.CORNER.variants.length);
+                    this.previewBlocks[replaceIdx] = new Block('CORNER', variant);
+                }
+                this.selectedSlot = null;
+                this.updateSlotClasses();
+                this.renderPreviews();
+
+                if (animateSlots) {
+                    for (let i = 0; i < 3; i++) {
+                        const slot = document.getElementById(`slot${i}`);
+                        slot.classList.remove('spawn-pop');
+                        void slot.offsetWidth;
+                        slot.classList.add('spawn-pop');
+                    }
+                }
+
+                if (!this.canPlaceAny()) this.checkGameOver();
+            }
+            
+            checkGameOver() {
+                if (this.canPlaceAny()) return;
+                this.isGameOver = true;
+                
+                if (this.hammerAvailable && !this.hammerUsed) {
+                    document.getElementById('rescueModal').classList.add('show');
+                    I18N.updateUI();
+                } else {
+                    this.showGameOver();
+                }
+            }
+            
+            showGameOver() {
+                document.getElementById('finalScore').textContent = `${I18N.t('finalScore')} ${this.score}`;
+                document.getElementById('finalLoops').textContent = `${I18N.t('finalLoops')} ${this.loops}`;
+                Storage.remove('loopixSave');
+                
+                if (this.isNewRecord) {
+                    this.generateShareImage();
+                    document.getElementById('shareModal').classList.add('show');
+                    I18N.updateUI();
+                    this.isNewRecord = false;
+                } else {
+                    document.getElementById('gameOverModal').classList.add('show');
+                }
+            }
+            
+            useRescueHammer() {
+                document.getElementById('rescueModal').classList.remove('show');
+                this.isGameOver = false;
+                this.isRescueHammer = true;
+                this.useHammer();
+            }
+            
+            declineRescue() {
+                document.getElementById('rescueModal').classList.remove('show');
+                this.isRescueHammer = false;
+                this.showGameOver();
+            }
+            
+            updateSlotClasses() {
+                for (let i = 0; i < 3; i++) {
+                    const slot = document.getElementById(`slot${i}`);
+                    slot.classList.remove('selected', 'has-block', 'empty', 'dragging');
+                    if (!this.previewBlocks[i]) slot.classList.add('empty');
+                    else {
+                        slot.classList.add('has-block');
+                        if (this.selectedSlot === i) slot.classList.add('selected');
+                        if (this.isDraggingToBoard && this.dragSlot === i) slot.classList.add('dragging');
+                    }
+                }
+            }
+            
+            randomBlock(forBoardSpawn = false) {
+                const baseWeight = 100;
+                let weights = {
+                    'STRAIGHT': baseWeight,
+                    'CORNER': baseWeight * 1.15,
+                    'T_SHAPE': 0,
+                    'CROSS': 0,
+                    'ENDCAP': 0
+                };
+                if (this.difficultyLevel === 1) {
+                    weights['T_SHAPE'] = 45;
+                    if (!forBoardSpawn) weights['ENDCAP'] = 8;
+                } else if (this.difficultyLevel === 2) {
+                    weights['T_SHAPE'] = 75;
+                    weights['CROSS'] = 20;
+                    if (!forBoardSpawn) weights['ENDCAP'] = 18;
+                } else if (this.difficultyLevel >= 3) {
+                    weights['T_SHAPE'] = 90;
+                    weights['CROSS'] = 35;
+                    if (!forBoardSpawn) weights['ENDCAP'] = 22;
+                }
+                
+                const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
+                let random = Math.random() * totalWeight;
+                
+                for (const type in weights) {
+                    if (weights[type] === 0) continue;
+                    random -= weights[type];
+                    if (random <= 0) {
+                        const variant = BLOCK_TYPES[type].variants ? 
+                            Math.floor(Math.random() * BLOCK_TYPES[type].variants.length) : 0;
+                        return new Block(type, variant);
+                    }
+                }
+                return new Block('CORNER', 0);
+            }
+            
+            setupEvents() {
+                for (let i = 0; i < 3; i++) {
+                    const slot = document.getElementById(`slot${i}`);
+                    slot.addEventListener('pointerdown', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.startDrag(i, e.clientX, e.clientY, e.pointerType);
+                    }, { passive: false });
+                }
+                
+                window.addEventListener('pointermove', (e) => {
+                    if (!this.dragActive) return;
+                    e.preventDefault();
+                    this.updateDrag(e.clientX, e.clientY, e.pointerType);
+                }, { passive: false });
+
+                const onSlotEnd = (e) => {
+                    if (this.dragActive) {
+                        e.preventDefault();
+                        this.endDrag(e.clientX, e.clientY);
+                    }
+                };
+                window.addEventListener('pointerup', onSlotEnd);
+                window.addEventListener('pointercancel', () => {
+                    if (this.dragActive) {
+                        this.cancelBoardDrag();
+                    }
+                });
+                
+                this.canvas.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    try {
+                        this.canvas.setPointerCapture(e.pointerId);
+                    } catch (err) {}
+                    this.canvasPointerDown = true;
+                    this.canvasStartX = e.clientX;
+                    this.canvasStartY = e.clientY;
+                    this.isCanvasSliding = false;
+                    this.onCanvasMove(e);
+                }, { passive: false });
+
+                this.canvas.addEventListener('pointermove', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (this.canvasPointerDown && !this.isCanvasSliding) {
+                        if (Math.hypot(e.clientX - this.canvasStartX, e.clientY - this.canvasStartY) >= 14) {
+                            this.isCanvasSliding = true;
+                        }
+                    }
+                    this.onCanvasMove(e);
+                }, { passive: false });
+
+                this.canvas.addEventListener('pointerup', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    try {
+                        if (this.canvas.hasPointerCapture(e.pointerId)) {
+                            this.canvas.releasePointerCapture(e.pointerId);
+                        }
+                    } catch (err) {}
+                    if (this.canvasPointerDown) {
+                        this.canvasPointerDown = false;
+                        this.placeAtHoveredCell();
+                        this.isCanvasSliding = false;
+                    }
+                    this.onCanvasLeave();
+                }, { passive: false });
+
+                this.canvas.addEventListener('pointercancel', () => {
+                    this.canvasPointerDown = false;
+                    this.isCanvasSliding = false;
+                    this.onCanvasLeave();
+                });
+                this.canvas.addEventListener('pointerleave', () => {
+                    if (!this.canvasPointerDown) {
+                        this.onCanvasLeave();
+                    }
+                });
+            }
+
+            getCellFromClientPos(clientX, clientY, applyTouchOffset = false) {
+                const rect = this.canvas.getBoundingClientRect();
+                const offsetY = applyTouchOffset ? -this.cellSize * 1.05 : 0;
+                const targetX = clientX;
+                const targetY = clientY + offsetY;
+                const gx = Math.floor((targetX - rect.left) / this.cellSize);
+                const gy = Math.floor((targetY - rect.top) / this.cellSize);
+                if (gx >= 0 && gx < this.gridSize && gy >= 0 && gy < this.gridSize) {
+                    return { x: gx, y: gy };
+                }
+                return { x: -1, y: -1 };
+            }
+
+            updateFloatingDragPreview(clientX, clientY, isTouch) {
+                const block = this.previewBlocks[this.dragSlot];
+                if (!block || !this.dragFloatingCanvas) return;
+                const offsetY = isTouch ? -this.cellSize * 1.05 : 0;
+                const x = clientX - 34;
+                const y = clientY + offsetY - 34;
+                this.dragFloatingCanvas.style.display = 'block';
+                this.dragFloatingCanvas.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+                this.dragFloatingCtx.clearRect(0, 0, 68, 68);
+                this.drawBlock(this.dragFloatingCtx, block, 4, 4, 60, true, true, null, -1, -1);
+            }
+            
+            startDrag(idx, cx, cy, pointerType = 'touch') {
+                if (this.isGameOver || !this.previewBlocks[idx]) return;
+                this.dragActive = true;
+                this.dragSlot = idx;
+                this.dragStartSlot = idx;
+                this.dragStartX = cx;
+                this.dragStartY = cy;
+                this.dragRotated = false;
+                this.isDraggingToBoard = false;
+                this.dragPointerType = pointerType;
+                this.updateSlotClasses();
+                this.renderPreviews();
+            }
+            
+            updateDrag(cx, cy, pointerType = 'touch') {
+                if (!this.dragActive) return;
+                const dx = cx - this.dragStartX;
+                const dy = cy - this.dragStartY;
+                const dist = Math.hypot(dx, dy);
+
+                const canDragToBoard = !this.tutorialActive || this.tutorialStep === 3;
+                if (!this.isDraggingToBoard && !this.dragRotated && canDragToBoard && dy < -24 && Math.abs(dy) > Math.abs(dx) * 1.15) {
+                    this.isDraggingToBoard = true;
+                    this.selectedSlot = this.dragSlot;
+                    vibrationManager.lightVibration();
+                    this.updateSlotClasses();
+                }
+
+                if (this.isDraggingToBoard) {
+                    const useTouchOffset = (pointerType === 'touch' || this.dragPointerType === 'touch');
+                    this.updateFloatingDragPreview(cx, cy, useTouchOffset);
+                    this.hoverCell = this.getCellFromClientPos(cx, cy, useTouchOffset);
+                    return;
+                }
+
+                if (!this.dragRotated && dist >= this.dragThreshold) {
+                    this.previewBlocks[this.dragSlot].rotate();
+                    audioManager.playRotate();
+                    vibrationManager.lightVibration();
+                    this.renderPreviews();
+                    this.dragRotated = true;
+                    if (!this.tutorialActive) this.saveGame();
+                    if (this.tutorialActive && this.tutorialStep === 2 && this.dragSlot === 0) {
+                        const b = this.previewBlocks[0];
+                        if (b.connectors[0] === 1 && b.connectors[1] === 1 && b.connectors[2] === 0 && b.connectors[3] === 0) {
+                            this.nextTutorialStep();
+                        }
+                    }
+                }
+            }
+            
+            endDrag(cx, cy) {
+                if (!this.dragActive) return;
+                const slotIdx = this.dragStartSlot;
+                const wasRotated = this.dragRotated;
+                const wasBoardDrag = this.isDraggingToBoard;
+
+                this.dragActive = false;
+                this.dragSlot = -1;
+                this.dragStartSlot = -1;
+                this.dragRotated = false;
+                this.isDraggingToBoard = false;
+                if (this.dragFloatingCanvas) {
+                    this.dragFloatingCanvas.style.display = 'none';
+                }
+
+                if (wasBoardDrag) {
+                    const gx = this.hoverCell.x;
+                    const gy = this.hoverCell.y;
+                    this.hoverCell = { x: -1, y: -1 };
+                    if (gx >= 0 && gy >= 0 && !this.grid[gy][gx]) {
+                        if (this.tutorialActive && this.tutorialStep === 3) {
+                            if (gx === 2 && gy === 3) {
+                                this.placeBlock(gx, gy, slotIdx);
+                                return;
+                            }
+                        } else if (!this.tutorialActive) {
+                            this.placeBlock(gx, gy, slotIdx);
+                            return;
+                        }
+                    }
+                    this.selectedSlot = slotIdx;
+                    this.updateSlotClasses();
+                    return;
+                }
+
+                if (wasRotated) {
+                    this.selectedSlot = slotIdx;
+                    this.updateSlotClasses();
+                } else {
+                    this.handleSlotClick(slotIdx);
+                }
+            }
+
+            cancelBoardDrag() {
+                this.dragActive = false;
+                this.dragSlot = -1;
+                this.dragStartSlot = -1;
+                this.dragRotated = false;
+                this.isDraggingToBoard = false;
+                this.hoverCell = { x: -1, y: -1 };
+                if (this.dragFloatingCanvas) {
+                    this.dragFloatingCanvas.style.display = 'none';
+                }
+                this.updateSlotClasses();
+            }
+            
+            handleSlotClick(idx) {
+                if (this.isGameOver || !this.previewBlocks[idx]) return;
+                
+                if (this.tutorialActive) {
+                    if (this.tutorialStep === 1 && idx === 0) {
+                        this.selectedSlot = idx;
+                        this.updateSlotClasses();
+                        this.renderPreviews();
+                        this.nextTutorialStep();
+                    } else if (this.tutorialStep === 2 && idx === 0) {
+                        this.previewBlocks[0].rotate();
+                        audioManager.playRotate();
+                        vibrationManager.lightVibration();
+                        this.renderPreviews();
+                        const b = this.previewBlocks[0];
+                        if (b.connectors[0] === 1 && b.connectors[1] === 1 && b.connectors[2] === 0 && b.connectors[3] === 0) {
+                            this.nextTutorialStep();
+                        }
+                    }
+                    return;
+                }
+                
+                if (this.selectedSlot === idx) {
+                    this.previewBlocks[idx].rotate();
+                    audioManager.playRotate();
+                    vibrationManager.lightVibration();
+                } else {
+                    this.selectedSlot = idx;
+                    vibrationManager.lightVibration();
+                }
+                
+                this.updateSlotClasses();
+                this.renderPreviews();
+                this.saveGame();
+            }
+            
+            onCanvasMove(e) {
+                if (this.isGameOver) return;
+                const useTouchOffset = (this.isCanvasSliding && e.pointerType === 'touch' && !this.hammerMode);
+                this.hoverCell = this.getCellFromClientPos(e.clientX, e.clientY, useTouchOffset);
+                const { x: gx, y: gy } = this.hoverCell;
+                this.canvas.classList.toggle('hammer-target', Boolean(this.hammerMode && gx >= 0 && gy >= 0 && this.grid[gy]?.[gx]));
+            }
+            
+            onCanvasLeave() {
+                this.hoverCell = {x: -1, y: -1};
+                this.canvas.classList.remove('hammer-target');
+            }
+            
+            placeAtHoveredCell() {
+                if (this.isGameOver) return;
+                const { x: gx, y: gy } = this.hoverCell;
+                if (gx < 0 || gx >= this.gridSize || gy < 0 || gy >= this.gridSize) return;
+                
+                if (this.hammerMode) {
+                    if (this.grid[gy]?.[gx]) this.removeBlock(gx, gy);
+                    return;
+                }
+                
+                if (this.selectedSlot === null) return;
+                if (this.tutorialActive && this.tutorialStep === 3) {
+                    if (gx === 2 && gy === 3 && !this.grid[gy][gx]) this.placeBlock(gx, gy, this.selectedSlot);
+                    return;
+                }
+                if (!this.grid[gy][gx]) {
+                    this.placeBlock(gx, gy, this.selectedSlot);
+                }
+            }
+            
+            placeBlock(x, y, slotIdx) {
+                const block = this.previewBlocks[slotIdx];
+                if (!block) return;
+                this.grid[y][x] = block;
+                this.previewBlocks[slotIdx] = null;
+                audioManager.playPlace(block.type);
+                this.addBlockScaleEffect(x, y);
+                if (this.selectedSlot === slotIdx) this.selectedSlot = null;
+                this.rebuildGridCache();
+                
+                if (this.tutorialActive && this.tutorialStep === 3) {
+                    const loops = this.findLoops();
+                    if (loops.length) {
+                        this.combo = loops.length;
+                        this.boardDimAlpha = 0.55;
+                        this.assignGlowColors(loops);
+                        this.clearLoops(loops, 1);
+                        setTimeout(() => this.nextTutorialStep(), 1500);
+                    }
+                    this.updateSlotClasses();
+                    this.renderPreviews();
+                    this.updateScore();
+                    return;
+                }
+                
+                const loops = this.findLoops();
+                if (loops.length) {
+                    const maxSize = Math.max(...loops.map(l => l.size));
+                    this.combo = maxSize * loops.length;
+                    if (this.combo > this.maxCombo) {
+                        this.maxCombo = this.combo;
+                        Storage.set('loopixMaxCombo', this.maxCombo);
+                    }
+                    this.addScreenShake(Math.min(maxSize * 2, 12));
+                    this.boardDimAlpha = maxSize >= 5 ? 0.62 : 0.45;
+                    if (maxSize >= 5) {
+                        this.activateSlowMotion(Math.min(maxSize * 180, 1400), 0.4);
+                    }
+                    vibrationManager.comboVibration(maxSize);
+                    this.assignGlowColors(loops);
+                    this.clearLoops(loops, loops.length);
+                    this.updateDifficultyByScore();
+                } else {
+                    this.combo = 1;
+                    this.addScreenShake(2);
+                }
+                
+                if (this.previewBlocks.every(b => b === null)) {
+                    this.generateNewSet(true);
+                } else if (!this.canPlaceAny()) {
+                    this.checkGameOver();
+                }
+                
+                this.updateSlotClasses();
+                this.renderPreviews();
+                this.updateScore();
+                if (!this.isGameOver && !this.tutorialActive) {
+                    this.saveGame();
+                }
+            }
+            
+            useHammer() {
+                if (!this.canProcessClick() || this.hammerUsed || this.isGameOver || this.tutorialActive) return;
+                if (this.adInterval) clearInterval(this.adInterval);
+                document.getElementById('adModal').classList.add('show');
+                I18N.updateUI();
+                let timer = 5;
+                const timerEl = document.getElementById('adTimer');
+                timerEl.textContent = timer;
+                this.adInterval = setInterval(() => {
+                    if (this.isPaused) return;
+                    timer--;
+                    timerEl.textContent = timer;
+                    if (timer <= 0) {
+                        clearInterval(this.adInterval);
+                        this.adInterval = null;
+                        document.getElementById('adModal').classList.remove('show');
+                        this.activateHammer();
+                    }
+                }, 1000);
+            }
+            
+            cancelAd() {
+                if (this.adInterval) { clearInterval(this.adInterval); this.adInterval = null; }
+                document.getElementById('adModal').classList.remove('show');
+                if (this.isRescueHammer && !this.canPlaceAny()) {
+                    this.isRescueHammer = false;
+                    this.checkGameOver();
+                }
+            }
+            
+            activateHammer() {
+                this.hammerMode = true;
+                this.hammerUsed = true;
+                this.hammerAvailable = false;
+                this.nextHammerAt = this.score + 2000;
+                document.getElementById('hammerBtn').classList.add('disabled');
+                document.getElementById('hammerIndicator').classList.add('show');
+                this.canvas.classList.add('hammer-mode');
+                this.selectedSlot = null;
+                this.updateSlotClasses();
+                this.saveGame();
+            }
+            
+            removeBlock(x, y) {
+                const targets = [{ x, y }];
+                if (this.isRescueHammer) {
+                    for (let i = 0; i < 4 && targets.length < 3; i++) {
+                        const nx = x + DIRS_4[i][0];
+                        const ny = y + DIRS_4[i][1];
+                        if (nx >= 0 && nx < this.gridSize && ny >= 0 && ny < this.gridSize && this.grid[ny][nx]) {
+                            targets.push({ x: nx, y: ny });
+                        }
+                    }
+                    this.isRescueHammer = false;
+                }
+
+                targets.forEach(pos => {
+                    this.createExplosion(pos.x, pos.y, '#ffd54f');
+                    this.grid[pos.y][pos.x] = null;
+                });
+
+                this.rebuildGridCache();
+                audioManager.playClear();
+                vibrationManager.comboVibration(targets.length * 2);
+                this.hammerMode = false;
+                this.canvas.classList.remove('hammer-mode', 'hammer-target');
+                document.getElementById('hammerIndicator').classList.remove('show');
+                this.addScreenShake(4);
+                this.saveGame();
+                if (!this.canPlaceAny()) this.checkGameOver();
+            }
+            
+            showComboPopup(loops, isCleanBoard = false, hasGolden = false) {
+                const popup = document.getElementById('comboPopup');
+                const textEl = document.getElementById('comboText');
+                const countEl = document.getElementById('comboCount');
+                const extraEl = document.getElementById('comboExtra');
+                const total = loops.reduce((s, l) => s + l.size, 0);
+                const phrases = getComboPhrases();
+                const accentColor = (isCleanBoard || hasGolden) ? '#ffd54f' : COMBO_COLORS[Math.floor(Math.random() * COMBO_COLORS.length)];
+                textEl.textContent = phrases[Math.floor(Math.random() * phrases.length)];
+                textEl.style.textShadow = `0 0 18px ${accentColor}, 0 0 36px ${accentColor}, 0 4px 16px rgba(0,0,0,0.95)`;
+                countEl.textContent = `${I18N.t('comboTimes')}${total}`;
+                countEl.style.color = accentColor;
+                countEl.style.textShadow = `0 0 14px ${accentColor}, 0 2px 10px rgba(0,0,0,0.95)`;
+
+                if (isCleanBoard && hasGolden) {
+                    extraEl.textContent = I18N.t('cleanAndGoldenBonus');
+                } else if (isCleanBoard) {
+                    extraEl.textContent = I18N.t('cleanBoardBonus');
+                } else if (hasGolden) {
+                    extraEl.textContent = I18N.t('goldenBonus');
+                } else {
+                    extraEl.textContent = '';
+                }
+
+                popup.classList.remove('hide');
+                popup.classList.add('show');
+                setTimeout(() => { popup.classList.remove('show'); popup.classList.add('hide'); }, 2200);
+            }
+            
+            canPlaceAny() { return this.grid.some(row => row.some(cell => !cell)); }
+            
+            isClosedLoop(comp) {
+                if (comp.size < 2) return false;
+                for (const key of comp) {
+                    const [cx, cy] = key.split(',').map(Number);
+                    const block = this.grid[cy][cx];
+                    if (!block) continue;
+                    for (let i = 0; i < 4; i++) {
+                        const [dx, dy, dir, opp] = DIRS_4[i];
+                        if (block.getConnector(dir)) {
+                            const nk = `${cx + dx},${cy + dy}`;
+                            if (!comp.has(nk)) return false;
+                            const nb = this.grid[cy + dy]?.[cx + dx];
+                            if (!nb || !nb.getConnector(opp)) return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            
+            findLoops() {
+                const loops = [], processed = new Set();
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        const key = `${x},${y}`;
+                        if (!this.grid[y][x] || processed.has(key)) continue;
+                        const comp = this.findConnectedComponent(x, y);
+                        comp.forEach(k => processed.add(k));
+                        if (this.isClosedLoop(comp)) loops.push(comp);
+                    }
+                }
+                return loops;
+            }
+            
+            findConnectedComponent(sx, sy) {
+                const comp = new Set(), queue = [{x: sx, y: sy}], visited = new Set([`${sx},${sy}`]);
+                while (queue.length) {
+                    const {x, y} = queue.shift();
+                    const block = this.grid[y][x];
+                    if (!block) continue;
+                    comp.add(`${x},${y}`);
+                    for (let i = 0; i < 4; i++) {
+                        const [dx, dy, dir, opp] = DIRS_4[i];
+                        if (!block.getConnector(dir)) continue;
+                        const nx = x + dx, ny = y + dy;
+                        if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) continue;
+                        const nb = this.grid[ny][nx];
+                        if (!nb || !nb.getConnector(opp)) continue;
+                        const nk = `${nx},${ny}`;
+                        if (!visited.has(nk)) { visited.add(nk); queue.push({x: nx, y: ny}); }
+                    }
+                }
+                return comp;
+            }
+            
+            assignGlowColors(loops) {
+                this.chainGlowColors.clear();
+                const colors = COLORS.chainColors;
+                loops.forEach((loop, i) => {
+                    const size = loop.size;
+                    const palette = size <= 6 ? colors.small : size <= 10 ? colors.medium : 
+                                   size <= 15 ? colors.large : size <= 20 ? colors.epic : colors.legendary;
+                    const color = palette[i % palette.length];
+                    loop.forEach(k => this.chainGlowColors.set(k, color));
+                });
+            }
+            
+            clearLoops(loops, chainsCleared = 1) {
+                let basePoints = 0;
+                let hasGoldenInLoop = false;
+                const multiLoopBonus = chainsCleared > 1 ? chainsCleared : 1;
+                this.lastLoopCells.clear();
+
+                loops.forEach(loop => {
+                    let loopPrice = 0;
+                    loop.forEach(k => {
+                        const [x, y] = k.split(',').map(Number);
+                        const block = this.grid[y][x];
+                        if (block) {
+                            loopPrice += block.price;
+                            if (block.isGolden) hasGoldenInLoop = true;
+                            this.dyingBlocks.push({
+                                x,
+                                y,
+                                block,
+                                glowColor: block.isGolden ? '#ffd700' : (this.chainGlowColors.get(k) || '#4fc3f7'),
+                                conn: [...this.gridCache[y][x].conn],
+                                alpha: 1.0,
+                                scale: 1.08
+                            });
+                        }
+                    });
+                    const points = loopPrice * loop.size * multiLoopBonus;
+                    basePoints += points;
+                    loop.forEach(k => this.lastLoopCells.add(k));
+                    loop.forEach(k => {
+                        const [x, y] = k.split(',').map(Number);
+                        const wasGolden = this.grid[y][x]?.isGolden;
+                        this.createExplosion(x, y, wasGolden ? '#ffd700' : (this.chainGlowColors.get(k) || '#4fc3f7'), wasGolden ? 28 : 20);
+                        this.grid[y][x] = null;
+                    });
+                });
+
+                this.rebuildGridCache();
+
+                // Проверяем сколько блоков осталось на поле после очистки петли
+                const remainingBlocks = this.countBlocksOnBoard();
+                const isCleanBoard = !this.tutorialActive && remainingBlocks === 0;
+
+                // Считаем бонусные множители:
+                // - Бонус «Чистое поле»: x2 к очкам за петлю
+                // - Золотой блок в петле: x2 к очкам + ускорение отката молотка на 1000 очков
+                let bonusMultiplier = 1;
+                if (isCleanBoard) {
+                    bonusMultiplier *= 2;
+                }
+                if (hasGoldenInLoop) {
+                    bonusMultiplier *= 2;
+                    if (this.hammerUsed) {
+                        this.nextHammerAt = Math.max(this.score, this.nextHammerAt - 1000);
+                    }
+                }
+
+                const totalPoints = basePoints * bonusMultiplier;
+                const maxSize = Math.max(...loops.map(l => l.size));
+                audioManager.playCombo(maxSize, isCleanBoard || hasGoldenInLoop);
+                this.showComboPopup(loops, isCleanBoard, hasGoldenInLoop);
+
+                this.score += totalPoints;
+                this.loops += chainsCleared;
+
+                this.animateScore(this.score);
+                this.updateScore();
+                this.checkHammerAvailability();
+
+                // После зачистки поля (если осталось меньше 3 блоков) меняем цветовую тему
+                // и спавним новые случайные блоки с проверкой совместимости коннекторов
+                if (!this.tutorialActive && remainingBlocks < 3) {
+                    if (this.spawnTimeout) clearTimeout(this.spawnTimeout);
+                    const targetCount = 2 + Math.floor(Math.random() * 2);
+                    this.spawnTimeout = setTimeout(() => {
+                        this.spawnTimeout = null;
+                        if (this.isGameOver || this.tutorialActive) return;
+                        this.cycleNextTheme();
+                        if (this.countBlocksOnBoard() < 3) {
+                            this.spawnBoardBlocks(targetCount, true);
+                        }
+                        this.saveGame();
+                        if (!this.canPlaceAny()) this.checkGameOver();
+                    }, 380);
+                }
+
+                setTimeout(() => { this.lastLoopCells.clear(); this.chainGlowColors.clear(); }, 600);
+            }
+            
+            createExplosion(gx, gy, color, count = 20) {
+                const x = gx * this.cellSize + this.cellSize / 2;
+                const y = gy * this.cellSize + this.cellSize / 2;
+                for (let i = 0; i < count; i++) {
+                    const angle = (Math.PI * 2 * i) / count;
+                    const speed = 2.5 + Math.random() * 5.0;
+                    this.particles.push({
+                        x, y,
+                        prevX: x,
+                        prevY: y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        life: 1,
+                        color,
+                        size: 3.5 + Math.random() * 4.0,
+                        decay: 0.016 + Math.random() * 0.018
+                    });
+                }
+            }
+            
+            renderPreviews() {
+                const pSize = this.previewCssSize;
+                for (let i = 0; i < 3; i++) {
+                    const canvas = document.getElementById(`preview${i}`);
+                    if (!canvas) continue;
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, pSize, pSize);
+                    if (this.previewBlocks[i]) {
+                        this.drawBlock(ctx, this.previewBlocks[i], 0, 0, pSize, false, true, null, -1, -1);
+                    }
+                }
+            }
+            
+            hasConnection(x, y, dir) {
+                const block = this.grid[y]?.[x];
+                if (!block || !block.getConnector(dir)) return false;
+                const [dx, dy, , opp] = DIRS_4[dir];
+                const nx = x + dx, ny = y + dy;
+                if (nx < 0 || nx >= this.gridSize || ny < 0 || ny >= this.gridSize) return false;
+                const nb = this.grid[ny][nx];
+                return Boolean(nb && nb.getConnector(opp));
+            }
+            
+            getGlowColor(x, y) {
+                if (this.lastLoopCells.size === 0) return null;
+                const key = `${x},${y}`;
+                return this.lastLoopCells.has(key) ? this.chainGlowColors.get(key) || '#fff' : null;
+            }
+
+            // Мягкая скругленная форма плитки (Squircle / Pebble) с индивидуальными радиусами углов
+            traceCustomSquircle(ctx, x0, y0, x1, y1, rTL, rTR, rBR, rBL) {
+                ctx.beginPath();
+                ctx.moveTo(x0 + rTL, y0);
+                ctx.lineTo(x1 - rTR, y0);
+                if (rTR > 0) ctx.quadraticCurveTo(x1, y0, x1, y0 + rTR);
+                ctx.lineTo(x1, y1 - rBR);
+                if (rBR > 0) ctx.quadraticCurveTo(x1, y1, x1 - rBR, y1);
+                ctx.lineTo(x0 + rBL, y1);
+                if (rBL > 0) ctx.quadraticCurveTo(x0, y1, x0, y1 - rBL);
+                ctx.lineTo(x0, y0 + rTL);
+                if (rTL > 0) ctx.quadraticCurveTo(x0, y0, x0 + rTL, y0);
+                ctx.closePath();
+            }
+
+            // Плавный обтекаемый внешний контур соединенных плиток
+            traceExposedTileBorder(ctx, x0, y0, x1, y1, rTL, rTR, rBR, rBL, connected) {
+                ctx.beginPath();
+                if (!connected[0] && !connected[3] && rTL > 0) {
+                    ctx.moveTo(x0, y0 + rTL);
+                    ctx.quadraticCurveTo(x0, y0, x0 + rTL, y0);
+                }
+                if (!connected[0]) {
+                    ctx.moveTo(x0 + rTL, y0);
+                    ctx.lineTo(x1 - rTR, y0);
+                }
+                if (!connected[0] && !connected[1] && rTR > 0) {
+                    ctx.moveTo(x1 - rTR, y0);
+                    ctx.quadraticCurveTo(x1, y0, x1, y0 + rTR);
+                }
+                if (!connected[1]) {
+                    ctx.moveTo(x1, y0 + rTR);
+                    ctx.lineTo(x1, y1 - rBR);
+                }
+                if (!connected[2] && !connected[1] && rBR > 0) {
+                    ctx.moveTo(x1, y1 - rBR);
+                    ctx.quadraticCurveTo(x1, y1, x1 - rBR, y1);
+                }
+                if (!connected[2]) {
+                    ctx.moveTo(x1 - rBR, y1);
+                    ctx.lineTo(x0 + rBL, y1);
+                }
+                if (!connected[2] && !connected[3] && rBL > 0) {
+                    ctx.moveTo(x0 + rBL, y1);
+                    ctx.quadraticCurveTo(x0, y1, x0, y1 - rBL);
+                }
+                if (!connected[3]) {
+                    ctx.moveTo(x0, y1 - rBL);
+                    ctx.lineTo(x0, y0 + rTL);
+                }
+            }
+            
+            drawBlock(ctx, block, x, y, size, isHighlighted = false, isPreview = false, glowColor = null, gx = -1, gy = -1, customConn = null, customScale = 1) {
+                const pad = isPreview ? 3.5 : 3;
+                const cornerR = Math.round(size * 0.32);
+                
+                let scale = customScale;
+                if (!isPreview && gx >= 0 && gy >= 0 && this.blockScaleAnimations.size > 0) {
+                    const animScale = this.blockScaleAnimations.get(`${gx},${gy}`);
+                    if (animScale) scale = animScale;
+                }
+                
+                const cellCache = (!isPreview && gx >= 0 && gy >= 0) ? this.gridCache[gy][gx] : null;
+                const connected = customConn || (cellCache ? cellCache.conn : [false, false, false, false]);
+                const hasFree = customConn ? false : (cellCache ? cellCache.hasFree : false);
+
+                const x0 = (!isPreview && connected[3]) ? x : x + pad;
+                const y0 = (!isPreview && connected[0]) ? y : y + pad;
+                const x1 = (!isPreview && connected[1]) ? x + size : x + size - pad;
+                const y1 = (!isPreview && connected[2]) ? y + size : y + size - pad;
+
+                const rTL = (!isPreview && (connected[0] || connected[3])) ? 0 : cornerR;
+                const rTR = (!isPreview && (connected[0] || connected[1])) ? 0 : cornerR;
+                const rBR = (!isPreview && (connected[2] || connected[1])) ? 0 : cornerR;
+                const rBL = (!isPreview && (connected[2] || connected[3])) ? 0 : cornerR;
+
+                const cx = x + size / 2;
+                const cy = y + size / 2;
+                
+                ctx.save();
+                if (scale !== 1) {
+                    ctx.translate(cx, cy);
+                    ctx.scale(scale, scale);
+                    ctx.translate(-cx, -cy);
+                }
+
+                const isGolden = Boolean(block.isGolden);
+                const baseColor = glowColor || (isHighlighted ? '#ffffff' : (isGolden ? '#ffd700' : block.color));
+
+                if ((glowColor || isGolden) && !isPreview) {
+                    ctx.shadowColor = glowColor || '#ffd700';
+                    ctx.shadowBlur = glowColor ? 18 : 14;
+                }
+                
+                // 1. Объемная подушечка плитки
+                this.traceCustomSquircle(ctx, x0, y0, x1, y1, rTL, rTR, rBR, rBL);
+                if (glowColor) {
+                    ctx.fillStyle = glowColor + '3D';
+                } else if (isGolden) {
+                    const goldGrad = ctx.createLinearGradient(x0, y0, x1, y1);
+                    goldGrad.addColorStop(0, 'rgba(255, 215, 0, 0.28)');
+                    goldGrad.addColorStop(0.5, 'rgba(255, 174, 66, 0.16)');
+                    goldGrad.addColorStop(1, 'rgba(40, 28, 8, 0.35)');
+                    ctx.fillStyle = goldGrad;
+                } else if (isHighlighted) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+                } else {
+                    const tileGrad = ctx.createLinearGradient(x0, y0, x1, y1);
+                    tileGrad.addColorStop(0, 'rgba(255, 255, 255, 0.14)');
+                    tileGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.06)');
+                    tileGrad.addColorStop(1, 'rgba(10, 14, 36, 0.25)');
+                    ctx.fillStyle = tileGrad;
+                }
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // 2. Внешний кант капсулы
+                ctx.strokeStyle = isGolden ? '#ffd700' : baseColor;
+                ctx.lineWidth = glowColor ? 2.6 : (isGolden ? 2.4 : (isHighlighted ? 2.2 : 1.5));
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.globalAlpha = glowColor ? 0.92 : (isGolden ? 0.88 : (isPreview ? 0.48 : 0.42));
+                if (isPreview) {
+                    this.traceCustomSquircle(ctx, x0, y0, x1, y1, rTL, rTR, rBR, rBL);
+                    ctx.stroke();
+                } else {
+                    this.traceExposedTileBorder(ctx, x0, y0, x1, y1, rTL, rTR, rBR, rBL, connected);
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1.0;
+
+                // 3. Геометрия дорожек внутри блока
+                const topCon = Boolean(block.getConnector(0));
+                const rightCon = Boolean(block.getConnector(1));
+                const botCon = Boolean(block.getConnector(2));
+                const leftCon = Boolean(block.getConnector(3));
+
+                const freeReach = size / 2 - (isPreview ? 8.5 : 7.5);
+                const fullReach = size / 2;
+
+                const dTop = (!isPreview && connected[0]) ? fullReach : freeReach;
+                const dRight = (!isPreview && connected[1]) ? fullReach : freeReach;
+                const dBot = (!isPreview && connected[2]) ? fullReach : freeReach;
+                const dLeft = (!isPreview && connected[3]) ? fullReach : freeReach;
+
+                const addCornerArc = (xA, yA, xB, yB, radius) => {
+                    ctx.moveTo(xA, yA);
+                    ctx.arcTo(cx, cy, xB, yB, radius);
+                    ctx.lineTo(xB, yB);
+                };
+
+                const traceBlockTubes = () => {
+                    ctx.beginPath();
+                    if (block.type === 'STRAIGHT') {
+                        if (topCon && botCon) {
+                            ctx.moveTo(cx, cy - dTop);
+                            ctx.lineTo(cx, cy + dBot);
+                        } else if (leftCon && rightCon) {
+                            ctx.moveTo(cx - dLeft, cy);
+                            ctx.lineTo(cx + dRight, cy);
+                        }
+                    } else if (block.type === 'CORNER') {
+                        if (topCon && rightCon) {
+                            addCornerArc(cx, cy - dTop, cx + dRight, cy, Math.min(dTop, dRight));
+                        } else if (rightCon && botCon) {
+                            addCornerArc(cx + dRight, cy, cx, cy + dBot, Math.min(dRight, dBot));
+                        } else if (botCon && leftCon) {
+                            addCornerArc(cx, cy + dBot, cx - dLeft, cy, Math.min(dBot, dLeft));
+                        } else if (leftCon && topCon) {
+                            addCornerArc(cx - dLeft, cy, cx, cy - dTop, Math.min(dLeft, dTop));
+                        }
+                    } else if (block.type === 'T_SHAPE') {
+                        const branchR = Math.min(freeReach, size * 0.36);
+                        if (leftCon && rightCon && topCon) {
+                            ctx.moveTo(cx - dLeft, cy); ctx.lineTo(cx + dRight, cy);
+                            addCornerArc(cx, cy - dTop, cx - dLeft, cy, Math.min(dTop, dLeft, branchR));
+                            addCornerArc(cx, cy - dTop, cx + dRight, cy, Math.min(dTop, dRight, branchR));
+                        } else if (leftCon && rightCon && botCon) {
+                            ctx.moveTo(cx - dLeft, cy); ctx.lineTo(cx + dRight, cy);
+                            addCornerArc(cx, cy + dBot, cx - dLeft, cy, Math.min(dBot, dLeft, branchR));
+                            addCornerArc(cx, cy + dBot, cx + dRight, cy, Math.min(dBot, dRight, branchR));
+                        } else if (topCon && botCon && rightCon) {
+                            ctx.moveTo(cx, cy - dTop); ctx.lineTo(cx, cy + dBot);
+                            addCornerArc(cx + dRight, cy, cx, cy - dTop, Math.min(dRight, dTop, branchR));
+                            addCornerArc(cx + dRight, cy, cx, cy + dBot, Math.min(dRight, dBot, branchR));
+                        } else if (topCon && botCon && leftCon) {
+                            ctx.moveTo(cx, cy - dTop); ctx.lineTo(cx, cy + dBot);
+                            addCornerArc(cx - dLeft, cy, cx, cy - dTop, Math.min(dLeft, dTop, branchR));
+                            addCornerArc(cx - dLeft, cy, cx, cy + dBot, Math.min(dLeft, dBot, branchR));
+                        }
+                    } else if (block.type === 'CROSS') {
+                        const crossR = Math.min(freeReach, size * 0.3);
+                        ctx.moveTo(cx, cy - dTop); ctx.lineTo(cx, cy + dBot);
+                        ctx.moveTo(cx - dLeft, cy); ctx.lineTo(cx + dRight, cy);
+                        addCornerArc(cx, cy - dTop, cx + dRight, cy, crossR);
+                        addCornerArc(cx + dRight, cy, cx, cy + dBot, crossR);
+                        addCornerArc(cx, cy + dBot, cx - dLeft, cy, crossR);
+                        addCornerArc(cx - dLeft, cy, cx, cy - dTop, crossR);
+                    } else if (block.type === 'ENDCAP') {
+                        // Блок-заглушка (тупик с 1 коннектором): линия до центрального энергетического узла
+                        if (topCon) { ctx.moveTo(cx, cy - dTop); ctx.lineTo(cx, cy); }
+                        else if (rightCon) { ctx.moveTo(cx + dRight, cy); ctx.lineTo(cx, cy); }
+                        else if (botCon) { ctx.moveTo(cx, cy + dBot); ctx.lineTo(cx, cy); }
+                        else if (leftCon) { ctx.moveTo(cx - dLeft, cy); ctx.lineTo(cx, cy); }
+                    }
+                };
+
+                // 4. Отрисовка трехслойной объемной неоновой трубки
+                const haloWidth = glowColor ? 13 : 10.5;
+                const bodyWidth = glowColor ? 7.0 : 5.8;
+                const coreWidth = glowColor ? 2.6 : 2.0;
+
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                // Слой 1: Неоновый ореол
+                traceBlockTubes();
+                ctx.strokeStyle = baseColor;
+                ctx.lineWidth = haloWidth;
+                ctx.globalAlpha = glowColor ? 0.55 : 0.26;
+                ctx.stroke();
+
+                // Слой 2: Тело трубки
+                traceBlockTubes();
+                ctx.strokeStyle = baseColor;
+                ctx.lineWidth = bodyWidth;
+                ctx.globalAlpha = 1.0;
+                ctx.stroke();
+
+                // Слой 3: Светящаяся сердцевина
+                traceBlockTubes();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+                ctx.lineWidth = coreWidth;
+                ctx.stroke();
+
+                // Для блока-заглушки (ENDCAP) рисуем аккуратную светящуюся капсулу-терминатор в центре
+                if (block.type === 'ENDCAP') {
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, size * 0.14, 0, Math.PI * 2);
+                    ctx.fillStyle = baseColor;
+                    ctx.fill();
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.stroke();
+                }
+
+                // Для «Золотого заряженного блока» рисуем золотую звезду-индикаторx2
+                if (isGolden) {
+                    const pulse = 0.88 + 0.15 * Math.sin(performance.now() * 0.006);
+                    const starX = x + size - pad - 8;
+                    const starY = y + pad + 8;
+                    ctx.save();
+                    ctx.translate(starX, starY);
+                    ctx.scale(pulse, pulse);
+                    ctx.fillStyle = '#ffd700';
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.2;
+                    ctx.beginPath();
+                    for (let i = 0; i < 5; i++) {
+                        const a1 = (i * 72 - 90) * Math.PI / 180;
+                        const a2 = ((i * 72 + 36) - 90) * Math.PI / 180;
+                        const rOuter = 5.5;
+                        const rInner = 2.4;
+                        if (i === 0) ctx.moveTo(Math.cos(a1) * rOuter, Math.sin(a1) * rOuter);
+                        else ctx.lineTo(Math.cos(a1) * rOuter, Math.sin(a1) * rOuter);
+                        ctx.lineTo(Math.cos(a2) * rInner, Math.sin(a2) * rInner);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // 5. Светящиеся колечки-порты на открытых концах
+                const showPorts = !glowColor && (isPreview || hasFree);
+                if (showPorts) {
+                    const drawOpenPort = (pxPort, pyPort, isBoardFree) => {
+                        if (isBoardFree) {
+                            ctx.fillStyle = 'rgba(255, 107, 157, 0.34)';
+                            ctx.beginPath();
+                            ctx.arc(pxPort, pyPort, 5.2, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        ctx.fillStyle = '#181b3d';
+                        ctx.strokeStyle = isBoardFree ? '#ff6b9d' : baseColor;
+                        ctx.lineWidth = 2.1;
+                        ctx.beginPath();
+                        ctx.arc(pxPort, pyPort, isBoardFree ? 3.2 : 2.7, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                    };
+
+                    if (topCon && (isPreview || !connected[0])) drawOpenPort(cx, cy - dTop, !isPreview);
+                    if (rightCon && (isPreview || !connected[1])) drawOpenPort(cx + dRight, cy, !isPreview);
+                    if (botCon && (isPreview || !connected[2])) drawOpenPort(cx, cy + dBot, !isPreview);
+                    if (leftCon && (isPreview || !connected[3])) drawOpenPort(cx - dLeft, cy, !isPreview);
+                }
+
+                ctx.restore();
+            }
+            
+            draw(dtFactor) {
+                const cs = this.cellSize;
+                const bs = this.boardCssSize;
+
+                this.ctx.clearRect(0, 0, bs, bs);
+                
+                // Мягкие округлые лунки для клеток поля
+                const slotPad = 3.2;
+                const slotR = Math.round(cs * 0.3);
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.025)';
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                this.ctx.lineWidth = 1;
+                for (let gy = 0; gy < this.gridSize; gy++) {
+                    for (let gx = 0; gx < this.gridSize; gx++) {
+                        const sx = gx * cs + slotPad;
+                        const sy = gy * cs + slotPad;
+                        this.traceCustomSquircle(this.ctx, sx, sy, sx + cs - slotPad * 2, sy + cs - slotPad * 2, slotR, slotR, slotR, slotR);
+                        this.ctx.fill();
+                        this.ctx.stroke();
+                    }
+                }
+                
+                // Подсветка наведения и призрака блока
+                if (this.hoverCell.x >= 0 && this.hoverCell.y >= 0) {
+                    const hx = this.hoverCell.x * cs, hy = this.hoverCell.y * cs;
+                    const hr = Math.round(cs * 0.3);
+                    if (this.hammerMode && this.grid[this.hoverCell.y][this.hoverCell.x]) {
+                        this.traceCustomSquircle(this.ctx, hx + 2, hy + 2, hx + cs - 2, hy + cs - 2, hr, hr, hr, hr);
+                        this.ctx.fillStyle = 'rgba(255, 213, 79, 0.28)';
+                        this.ctx.fill();
+                        this.ctx.strokeStyle = '#ffd54f';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.stroke();
+                    } else if (this.selectedSlot !== null && !this.grid[this.hoverCell.y][this.hoverCell.x]) {
+                        this.traceCustomSquircle(this.ctx, hx + 2, hy + 2, hx + cs - 2, hy + cs - 2, hr, hr, hr, hr);
+                        this.ctx.fillStyle = 'rgba(79, 195, 247, 0.16)';
+                        this.ctx.fill();
+                        this.ctx.strokeStyle = 'rgba(79, 195, 247, 0.6)';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.stroke();
+                        const ghost = this.previewBlocks[this.selectedSlot];
+                        if (ghost) {
+                            this.ctx.globalAlpha = 0.7;
+                            this.drawBlock(this.ctx, ghost, hx, hy, cs, false, true, null, -1, -1);
+                            this.ctx.globalAlpha = 1;
+                        }
+                    } else if (this.grid[this.hoverCell.y][this.hoverCell.x]) {
+                        this.traceCustomSquircle(this.ctx, hx + 2, hy + 2, hx + cs - 2, hy + cs - 2, hr, hr, hr, hr);
+                        this.ctx.fillStyle = 'rgba(255, 107, 157, 0.18)';
+                        this.ctx.fill();
+                    }
+                }
+                
+                // Отрисовка установленных блоков
+                const hasLoopHighlights = this.lastLoopCells.size > 0;
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        const block = this.grid[y][x];
+                        if (block) {
+                            const isHigh = hasLoopHighlights && this.lastLoopCells.has(`${x},${y}`);
+                            this.drawBlock(
+                                this.ctx,
+                                block,
+                                x * cs,
+                                y * cs,
+                                cs,
+                                isHigh,
+                                false,
+                                isHigh ? this.getGlowColor(x, y) : null,
+                                x,
+                                y
+                            );
+                        }
+                    }
+                }
+
+                // Затемнение неактивного поля ПОД сияющей петлей и салютом частиц
+                if (this.boardDimAlpha > 0.005) {
+                    this.ctx.fillStyle = `rgba(6, 8, 22, ${this.boardDimAlpha.toFixed(3)})`;
+                    this.ctx.fillRect(0, 0, bs, bs);
+                    if (this.dyingBlocks.length === 0) {
+                        this.boardDimAlpha *= Math.pow(0.86, dtFactor);
+                        if (this.boardDimAlpha < 0.01) this.boardDimAlpha = 0;
+                    }
+                }
+
+                // Неоновое свечение замкнутых петель поверх затемнения
+                for (let i = this.dyingBlocks.length - 1; i >= 0; i--) {
+                    const db = this.dyingBlocks[i];
+                    db.alpha -= 0.036 * dtFactor;
+                    db.scale = 1 + (db.scale - 1) * Math.pow(0.85, dtFactor);
+                    if (db.alpha <= 0) {
+                        this.dyingBlocks[i] = this.dyingBlocks[this.dyingBlocks.length - 1];
+                        this.dyingBlocks.pop();
+                        continue;
+                    }
+                    this.ctx.save();
+                    this.ctx.globalAlpha = Math.max(0, db.alpha);
+                    this.drawBlock(
+                        this.ctx,
+                        db.block,
+                        db.x * cs,
+                        db.y * cs,
+                        cs,
+                        true,
+                        false,
+                        db.glowColor,
+                        -1,
+                        -1,
+                        db.conn,
+                        db.scale
+                    );
+                    this.ctx.restore();
+                }
+                
+                // Аддитивные неоновые частицы поверх всех слоев
+                this.ctx.save();
+                this.ctx.globalCompositeOperation = 'lighter';
+                this.ctx.lineCap = 'round';
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    p.prevX = p.x;
+                    p.prevY = p.y;
+                    p.x += p.vx * dtFactor;
+                    p.y += p.vy * dtFactor;
+                    p.vy += 0.15 * dtFactor;
+                    p.life -= p.decay * dtFactor;
+
+                    if (p.life <= 0) {
+                        this.particles[i] = this.particles[this.particles.length - 1];
+                        this.particles.pop();
+                        continue;
+                    }
+
+                    const radius = Math.max(0.5, p.size * p.life);
+                    this.ctx.globalAlpha = p.life * 0.55;
+                    this.ctx.strokeStyle = p.color;
+                    this.ctx.lineWidth = radius * 1.8;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(p.x - p.vx * 1.4, p.y - p.vy * 1.4);
+                    this.ctx.lineTo(p.x, p.y);
+                    this.ctx.stroke();
+
+                    this.ctx.globalAlpha = p.life;
+                    this.ctx.fillStyle = p.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                this.ctx.restore();
+            }
+            
+            animate(timestamp = performance.now()) {
+                if (this.isPaused) return;
+
+                if (!this.lastFrameTime) this.lastFrameTime = timestamp;
+                const rawDeltaMs = Math.min(timestamp - this.lastFrameTime, 50);
+                this.lastFrameTime = timestamp;
+                const dtFactor = (rawDeltaMs / 16.667) * (this.slowMotionActive ? this.timeScale : 1);
+
+                this.updateScreenShake(dtFactor);
+                this.updateBlockScaleAnimations(dtFactor);
+                this.draw(dtFactor);
+
+                this.rafId = requestAnimationFrame((t) => this.animate(t));
+            }
+            
+            updateScore() {
+                if (this.score > this.highScore) {
+                    this.highScore = this.score;
+                    this.isNewRecord = true;
+                    Storage.set('loopixHigh', this.highScore);
+                }
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('highScore').textContent = this.highScore;
+                document.getElementById('maxCombo').textContent = this.maxCombo;
+            }
+            
+            generateShareImage() {
+                const canvas = document.getElementById('shareCanvas');
+                const ctx = canvas.getContext('2d');
+                const w = 1080, h = 1080;
+                
+                const grad = ctx.createLinearGradient(0, 0, 0, h);
+                grad.addColorStop(0, '#1a1a3e'); grad.addColorStop(0.5, '#2d2d5a'); grad.addColorStop(1, '#1a1a3e');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
+                
+                ctx.font = 'bold 120px -apple-system, sans-serif'; ctx.textAlign = 'center';
+                const tg = ctx.createLinearGradient(w/2-200, 0, w/2+200, 0);
+                tg.addColorStop(0, '#4fc3f7'); tg.addColorStop(0.5, '#69f0ae'); tg.addColorStop(1, '#ffd54f');
+                ctx.fillStyle = tg; ctx.shadowColor = '#4fc3f7'; ctx.shadowBlur = 30;
+                ctx.fillText('LOOPIX', w/2, 180);
+                
+                ctx.shadowBlur = 0; ctx.font = 'bold 50px -apple-system, sans-serif';
+                ctx.fillStyle = '#ffd54f'; ctx.shadowColor = '#ff8a65'; ctx.shadowBlur = 20;
+                ctx.fillText(I18N.t('newRecord'), w/2, 280);
+                
+                ctx.shadowBlur = 0; ctx.font = 'bold 90px -apple-system, sans-serif';
+                ctx.fillStyle = '#4fc3f7'; ctx.shadowColor = '#4fc3f7'; ctx.shadowBlur = 25;
+                ctx.fillText(this.score.toString(), w/2, 420);
+                
+                ctx.font = '40px -apple-system, sans-serif';
+                ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.shadowBlur = 10;
+                ctx.fillText(I18N.t('points'), w/2, 490);
+                
+                ctx.font = '35px -apple-system, sans-serif';
+                ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.shadowBlur = 0;
+                ctx.fillText(`🌀 ${I18N.t('finalLoops').replace(':', '')}: ${this.loops}`, w/2, 620);
+                ctx.fillStyle = '#ffd54f'; ctx.fillText(`⚡ ${I18N.t('maxCombo')}: x${this.maxCombo}`, w/2, 690);
+                
+                ctx.font = 'bold 45px -apple-system, sans-serif';
+                ctx.fillStyle = '#ff8a65'; ctx.shadowColor = '#ff8a65'; ctx.shadowBlur = 20;
+                ctx.fillText(I18N.t('canYouBeat'), w/2, 820);
+                
+                ctx.font = '30px -apple-system, sans-serif';
+                ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.shadowBlur = 0;
+                ctx.fillText('Loopix v1.2', w/2, 980);
+            }
+            
+            downloadShareImage() {
+                const canvas = document.getElementById('shareCanvas');
+                const link = document.createElement('a');
+                link.download = 'loopix-record.png';
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            async shareImage() {
+                const canvas = document.getElementById('shareCanvas');
+                
+                if (navigator.share && navigator.canShare) {
+                    try {
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                        const file = new File([blob], 'loopix-record.png', { type: 'image/png' });
+                        
+                        if (navigator.canShare({ files: [file] })) {
+                            await navigator.share({
+                                title: I18N.t('shareTitle'),
+                                text: I18N.t('shareText', { score: this.score }),
+                                files: [file]
+                            });
+                            return;
+                        }
+                    } catch (e) {}
+                }
+                
+                this.downloadShareImage();
+            }
+            
+            closeShareModal() {
+                document.getElementById('shareModal').classList.remove('show');
+                document.getElementById('gameOverModal').classList.add('show');
+            }
+            
+            newGame() {
+                if (this.adInterval) {
+                    clearInterval(this.adInterval);
+                    this.adInterval = null;
+                }
+                if (this.slowMoTimeout) {
+                    clearTimeout(this.slowMoTimeout);
+                    this.slowMoTimeout = null;
+                }
+                if (this.spawnTimeout) {
+                    clearTimeout(this.spawnTimeout);
+                    this.spawnTimeout = null;
+                }
+                
+                this.isGameOver = false;
+                this.score = 0; this.displayScore = 0; this.loops = 0; this.combo = 1;
+                this.difficultyLevel = 0;
+                this.previewBlocks = [null, null, null]; this.selectedSlot = null;
+                this.hoverCell = { x: -1, y: -1 };
+                this.lastLoopCells.clear(); this.chainGlowColors.clear();
+                this.particles = [];
+                this.dyingBlocks = [];
+                this.boardDimAlpha = 0;
+                this.hammerMode = false; this.hammerUsed = false; this.hammerAvailable = true;
+                this.isRescueHammer = false;
+                this.nextHammerAt = 2000;
+                this.shakeIntensity = 0; this.blockScaleAnimations.clear();
+                this.slowMotionActive = false; this.timeScale = 1;
+                this.dragActive = false; this.dragRotated = false; this.isDraggingToBoard = false;
+                this.canvasPointerDown = false; this.isCanvasSliding = false;
+                this.isNewRecord = false;
+                if (this.dragFloatingCanvas) {
+                    this.dragFloatingCanvas.style.display = 'none';
+                }
+                this.canvas.classList.remove('hammer-mode', 'hammer-target', 'slow-motion-active');
+                document.getElementById('hammerBtn').classList.remove('disabled');
+                document.getElementById('hammerIndicator').classList.remove('show');
+                document.getElementById('gameOverModal').classList.remove('show');
+                document.getElementById('shareModal').classList.remove('show');
+                document.getElementById('rescueModal').classList.remove('show');
+                document.getElementById('adModal').classList.remove('show');
+                this.gameWrapper.style.transform = '';
+                Storage.remove('loopixSave');
+                this.applyTheme('neon', true);
+                this.setupGrid();
+                this.placeInitialBlocks();
+                this.generateNewSet(true);
+                this.updateScore();
+                this.updateUITexts();
+                this.saveGame();
+            }
+        }
+        
+        let game;
+        document.addEventListener('DOMContentLoaded', () => {
+            game = new Loopix();
+            window.game = game;
+        });
+    </script>
+</body>
+</html>
