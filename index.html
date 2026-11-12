@@ -49,22 +49,41 @@
             right: 0;
             bottom: 0;
         }
+        #topHeader {
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px 4px;
+            gap: 8px;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+        .header-side {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
         h1 {
             margin: 0;
-            padding: 15px 0 5px;
-            font-size: clamp(1.8em, 5vh, 2.8em);
+            padding: 0;
+            font-size: clamp(1.25em, 5vw, 1.75em);
             font-weight: 800;
-            letter-spacing: 6px;
+            letter-spacing: 3px;
             color: transparent;
             background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 50%, var(--accent-tertiary) 100%);
             -webkit-background-clip: text;
             background-clip: text;
-            text-shadow: 0 0 40px rgba(79, 195, 247, 0.45), 0 4px 20px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 0 32px rgba(79, 195, 247, 0.45), 0 4px 16px rgba(0, 0, 0, 0.3);
             position: relative;
             z-index: 10;
-            transform: perspective(500px) rotateX(2deg);
             line-height: 1.1;
-            flex-shrink: 0;
+            white-space: nowrap;
+            text-align: center;
+            flex: 1;
+            min-width: 0;
         }
         #gameContainer {
             display: flex;
@@ -95,6 +114,50 @@
             border: 1px solid rgba(255, 255, 255, 0.14);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
             flex-shrink: 0;
+            min-height: 62px;
+            align-items: center;
+        }
+        #tutorialBanner {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: linear-gradient(135deg, rgba(79, 195, 247, 0.22), rgba(105, 240, 174, 0.18));
+            padding: 12px 24px;
+            border-radius: 26px;
+            backdrop-filter: blur(12px);
+            border: 2px solid var(--accent-primary);
+            box-shadow: 0 0 28px rgba(79, 195, 247, 0.45), 0 8px 24px rgba(0, 0, 0, 0.25);
+            flex-shrink: 0;
+            min-height: 62px;
+            width: 100%;
+            max-width: 340px;
+            text-align: center;
+            animation: tutorial-banner-pulse 1.6s ease-in-out infinite;
+        }
+        #tutorialBanner.show {
+            display: flex;
+        }
+        @keyframes tutorial-banner-pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(79, 195, 247, 0.35), 0 8px 24px rgba(0, 0, 0, 0.25); transform: scale(1); }
+            50% { box-shadow: 0 0 34px rgba(79, 195, 247, 0.7), 0 8px 28px rgba(0, 0, 0, 0.3); transform: scale(1.02); }
+        }
+        #tutorialBannerStep {
+            background: var(--accent-primary);
+            color: #161838;
+            font-weight: 900;
+            font-size: 0.8em;
+            padding: 4px 9px;
+            border-radius: 12px;
+            flex-shrink: 0;
+            letter-spacing: 0.5px;
+        }
+        #tutorialBannerText {
+            font-size: 1.08em;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 0.4px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
         }
         .score-item {
             display: flex;
@@ -123,7 +186,8 @@
             text-shadow: 0 0 20px var(--accent-tertiary);
         }
         #mainCanvas {
-            border-radius: 28px;
+            border-radius: 17px;
+            overflow: hidden;
             background: radial-gradient(circle at 50% 45%, var(--board-bg-1) 0%, var(--board-bg-2) 100%);
             box-shadow: 0 12px 38px rgba(0, 0, 0, 0.42), inset 0 0 0 1.5px rgba(255, 255, 255, 0.1);
             cursor: crosshair;
@@ -144,6 +208,7 @@
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
             position: relative;
             align-items: center;
+            justify-content: center;
             flex-shrink: 0;
         }
         .preview-slot {
@@ -174,7 +239,7 @@
             cursor: default;
         }
         .preview-slot.disabled {
-            opacity: 0.3;
+            opacity: 0.28;
             cursor: not-allowed;
             pointer-events: none;
         }
@@ -188,11 +253,11 @@
         .preview-slot.tutorial-active {
             animation: tutorial-pulse 1s ease-in-out infinite;
             border-color: var(--accent-primary);
-            box-shadow: 0 0 30px rgba(79, 195, 247, 0.6);
+            box-shadow: 0 0 30px rgba(79, 195, 247, 0.65);
         }
         @keyframes tutorial-pulse {
-            0%, 100% { box-shadow: 0 0 20px rgba(79, 195, 247, 0.4); transform: scale(1); }
-            50% { box-shadow: 0 0 40px rgba(79, 195, 247, 0.8); transform: scale(1.05); }
+            0%, 100% { box-shadow: 0 0 20px rgba(79, 195, 247, 0.45); transform: scale(1); }
+            50% { box-shadow: 0 0 40px rgba(79, 195, 247, 0.9); transform: scale(1.08); }
         }
         .preview-slot canvas {
             border-radius: 16px;
@@ -216,56 +281,63 @@
             filter: drop-shadow(0 10px 24px rgba(79, 195, 247, 0.75));
             will-change: transform;
         }
-        #settingsBtn {
+        #tutorialGhostCanvas {
             position: fixed;
-            top: max(16px, env(safe-area-inset-top, 16px));
-            right: max(16px, env(safe-area-inset-right, 16px));
-            width: 46px;
-            height: 46px;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1450;
+            display: none;
+        }
+        #tutorialGhostCanvas.show {
+            display: block;
+        }
+        #settingsBtn {
+            width: 40px;
+            height: 40px;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
+            border-radius: 14px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 100;
             touch-action: manipulation;
             color: white;
             backdrop-filter: blur(8px);
-            transition: transform 0.2s, background 0.2s;
+            transition: transform 0.2s, background 0.2s, opacity 0.2s;
+            flex-shrink: 0;
         }
         #settingsBtn:active {
             background: rgba(255, 255, 255, 0.3);
             transform: scale(0.95);
         }
         #leaderboardBtn {
-            position: fixed;
-            top: max(16px, env(safe-area-inset-top, 16px));
-            right: calc(max(16px, env(safe-area-inset-right, 16px)) + 56px);
-            width: 46px;
-            height: 46px;
+            width: 40px;
+            height: 40px;
             background: linear-gradient(135deg, rgba(255, 213, 79, 0.22), rgba(79, 195, 247, 0.22));
             border: 1px solid rgba(255, 213, 79, 0.45);
-            border-radius: 16px;
+            border-radius: 14px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 100;
             touch-action: manipulation;
             color: #ffd54f;
             backdrop-filter: blur(8px);
             box-shadow: 0 4px 16px rgba(255, 213, 79, 0.2);
-            transition: transform 0.2s, background 0.2s;
+            transition: transform 0.2s, background 0.2s, opacity 0.2s;
+            flex-shrink: 0;
         }
         #leaderboardBtn:active {
             background: rgba(255, 213, 79, 0.35);
             transform: scale(0.95);
         }
         .vector-icon {
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
             fill: none;
             stroke: currentColor;
             stroke-width: 2.2;
@@ -274,24 +346,21 @@
             filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
         }
         #hammerBtn {
-            position: fixed;
-            top: max(16px, env(safe-area-inset-top, 16px));
-            left: max(16px, env(safe-area-inset-left, 16px));
-            width: 46px;
-            height: 46px;
+            width: 40px;
+            height: 40px;
             background: linear-gradient(135deg, #ffd54f, #ff8a65);
             border: 1px solid rgba(255, 255, 255, 0.35);
-            border-radius: 16px;
+            border-radius: 14px;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             transition: transform 0.2s, opacity 0.2s, box-shadow 0.3s;
-            z-index: 100;
             box-shadow: 0 4px 16px rgba(255, 213, 79, 0.45);
             touch-action: manipulation;
             color: #1a1a3e;
+            flex-shrink: 0;
         }
         #hammerBtn:active:not(.disabled) {
             transform: scale(0.95);
@@ -304,15 +373,47 @@
             box-shadow: none;
             color: rgba(255,255,255,0.5);
         }
-        #hammerBtn .ad-label {
-            font-size: 8px;
+        #hammerBtn .ad-label, #undoBtn .ad-label {
+            font-size: 7.5px;
             font-weight: 800;
             color: #1a1a3e;
-            margin-top: -3px;
-            letter-spacing: 0.5px;
+            margin-top: -2px;
+            letter-spacing: 0.4px;
         }
-        #hammerBtn.disabled .ad-label {
+        #hammerBtn.disabled .ad-label, #undoBtn.disabled .ad-label {
             color: rgba(255, 255, 255, 0.5);
+        }
+        #undoBtn {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #4fc3f7, #69f0ae);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 14px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, opacity 0.2s, box-shadow 0.3s;
+            box-shadow: 0 4px 16px rgba(79, 195, 247, 0.4);
+            touch-action: manipulation;
+            color: #1a1a3e;
+            flex-shrink: 0;
+        }
+        #undoBtn:active:not(.disabled) {
+            transform: scale(0.95);
+        }
+        #undoBtn.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+            color: rgba(255,255,255,0.5);
+        }
+        .tutorial-locked {
+            pointer-events: none !important;
+            opacity: 0.25 !important;
         }
         #hammerIndicator {
             position: fixed;
@@ -347,6 +448,12 @@
             justify-content: center;
             z-index: 1000;
             backdrop-filter: blur(5px);
+        }
+        #leaderboardModal {
+            z-index: 1200;
+        }
+        #adModal {
+            z-index: 1250;
         }
         #settingsModal.show, #gameOverModal.show, #adModal.show, #rescueModal.show, #shareModal.show, #leaderboardModal.show {
             display: flex;
@@ -655,75 +762,6 @@
         .combo-extra:empty {
             display: none;
         }
-        #tutorialOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2000;
-            display: none;
-            pointer-events: none;
-        }
-        #tutorialOverlay.show {
-            display: block;
-        }
-        .tutorial-step {
-            position: absolute;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            pointer-events: none;
-            width: 100%;
-            padding: 0 16px;
-        }
-        .tutorial-step.active {
-            display: flex;
-        }
-        .tutorial-text {
-            background: rgba(79, 195, 247, 0.95);
-            color: #1a1a3e;
-            padding: 12px 20px;
-            border-radius: 18px;
-            font-size: 1em;
-            font-weight: bold;
-            text-align: center;
-            box-shadow: 0 4px 30px rgba(79, 195, 247, 0.5);
-            animation: float 2s ease-in-out infinite;
-            pointer-events: auto;
-            cursor: pointer;
-            max-width: min(320px, 88vw);
-            line-height: 1.35;
-            white-space: normal;
-            touch-action: manipulation;
-        }
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
-        }
-        #tutorialSkip {
-            position: absolute;
-            bottom: calc(65px + env(safe-area-inset-bottom, 0px));
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 107, 157, 0.9);
-            border: none;
-            color: white;
-            padding: 12px 30px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: 600;
-            pointer-events: auto;
-            box-shadow: 0 4px 20px rgba(255, 107, 157, 0.4);
-            white-space: nowrap;
-            touch-action: manipulation;
-            outline: none;
-        }
-        #tutorialSkip:active {
-            transform: translateX(-50%) scale(0.95);
-        }
         .canvas-tutorial {
             animation: canvas-pulse 1.5s ease-in-out infinite;
             cursor: pointer !important;
@@ -731,18 +769,6 @@
         @keyframes canvas-pulse {
             0%, 100% { box-shadow: 0 0 30px rgba(79, 195, 247, 0.4); }
             50% { box-shadow: 0 0 50px rgba(79, 195, 247, 0.8); }
-        }
-        .tutorial-target {
-            position: absolute;
-            border: 3px dashed #ffd54f;
-            border-radius: 18px;
-            box-shadow: 0 0 20px rgba(255, 217, 61, 0.5);
-            animation: target-pulse 1s ease-in-out infinite;
-            pointer-events: none;
-        }
-        @keyframes target-pulse {
-            0%, 100% { opacity: 0.6; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.05); }
         }
         .hammer-mode {
             cursor: crosshair !important;
@@ -979,24 +1005,37 @@
         </div>
     </div>
     
-    <h1>LOOPIX</h1>
-    <div id="leaderboardBtn" title="Таблица лидеров">
-        <svg class="vector-icon" viewBox="0 0 24 24">
-            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-            <path d="M4 22h16"></path>
-            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
-            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
-            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
-        </svg>
-    </div>
-    <div id="settingsBtn" title="Настройки">
-        <svg class="vector-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-    </div>
-    <div id="hammerBtn" title="Удалить блок (смотреть рекламу)">
-        <svg class="vector-icon" viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M15 12l-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9"></path><path d="M17.64 15L22 10.64l-6-6L11.64 9"></path><path d="m15 5 3 3"></path></svg>
-        <span class="ad-label">AD</span>
-    </div>
+    <header id="topHeader">
+        <div class="header-side left">
+            <div id="hammerBtn" title="Удалить блок (смотреть рекламу)">
+                <svg class="vector-icon" viewBox="0 0 24 24" style="width:18px;height:18px;"><path d="M15 12l-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9"></path><path d="M17.64 15L22 10.64l-6-6L11.64 9"></path><path d="m15 5 3 3"></path></svg>
+                <span class="ad-label">AD</span>
+            </div>
+            <div id="undoBtn" class="disabled" title="Отменить ход (смотреть рекламу)">
+                <svg class="vector-icon" viewBox="0 0 24 24" style="width:18px;height:18px;">
+                    <path d="M3 7v6h6"></path>
+                    <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+                </svg>
+                <span class="ad-label">AD</span>
+            </div>
+        </div>
+        <h1>LOOPIX</h1>
+        <div class="header-side right">
+            <div id="leaderboardBtn" title="Таблица лидеров">
+                <svg class="vector-icon" viewBox="0 0 24 24">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                    <path d="M4 22h16"></path>
+                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                </svg>
+            </div>
+            <div id="settingsBtn" title="Настройки">
+                <svg class="vector-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </div>
+        </div>
+    </header>
     <div id="hammerIndicator">🔨 Выбери блок для удаления</div>
     <div id="gameContainer">
         <div id="scoreBoard">
@@ -1012,6 +1051,10 @@
                 <span class="score-label" data-i18n="maxCombo">Макс Комбо</span>
                 <span class="score-value combo" id="maxCombo">0</span>
             </div>
+        </div>
+        <div id="tutorialBanner">
+            <span id="tutorialBannerStep">1/5</span>
+            <span id="tutorialBannerText">Выбери блок</span>
         </div>
         <div id="gameWrapper">
             <canvas id="mainCanvas" width="300" height="300"></canvas>
@@ -1030,25 +1073,12 @@
     </div>
 
     <canvas id="dragFloatingCanvas" width="68" height="68"></canvas>
+    <canvas id="tutorialGhostCanvas"></canvas>
     
     <div id="comboPopup">
         <div class="combo-text" id="comboText">КРУТО!</div>
         <div class="combo-count" id="comboCount">КОМБО x4</div>
         <div class="combo-extra" id="comboExtra"></div>
-    </div>
-    
-    <div id="tutorialOverlay">
-        <div class="tutorial-step" id="step1">
-            <div class="tutorial-text" data-i18n="tutorialStep1">Выбери блок</div>
-        </div>
-        <div class="tutorial-step" id="step2">
-            <div class="tutorial-text" data-i18n="tutorialStep2">Свайпни или нажми чтобы повернуть</div>
-        </div>
-        <div class="tutorial-step" id="step3">
-            <div class="tutorial-text" data-i18n="tutorialStep3">Ставь сюда</div>
-        </div>
-        <div id="tutorialTarget" class="tutorial-target"></div>
-        <button id="tutorialSkip" data-i18n="skipTutorial">Пропустить обучение</button>
     </div>
 
     <div id="leaderboardModal">
@@ -1104,14 +1134,14 @@
                 <button class="modal-btn secondary" id="closeSettingsBtn" data-i18n="close">Закрыть</button>
             </div>
             
-            <div class="modal-footer">Loopix v1.2</div>
+            <div class="modal-footer">Loopix v1.3</div>
         </div>
     </div>
     
     <div id="adModal">
         <div class="modal-content">
-            <h3 data-i18n="adTitle">🔨 Реклама</h3>
-            <p data-i18n="adText">Просмотрите рекламу, чтобы удалить блок</p>
+            <h3 id="adModalTitle" data-i18n="adTitle">🔨 Реклама</h3>
+            <p id="adModalText" data-i18n="adText">Просмотрите рекламу, чтобы удалить блок</p>
             <div class="ad-timer" id="adTimer">5</div>
             <button class="modal-btn secondary" id="cancelAdBtn" data-i18n="cancel">Отмена</button>
         </div>
@@ -1120,7 +1150,7 @@
     <div id="rescueModal">
         <div class="modal-content">
             <h3 data-i18n="lastChance">Последний шанс</h3>
-            <p data-i18n="noMoves">Нет ходов. Смотреть рекламу и очистить до 3 блоков молотком?</p>
+            <p data-i18n="noMoves">Нет ходов. Смотреть рекламу и разбить 1 блок молотком?</p>
             <div class="modal-actions">
                 <button class="modal-btn warning" id="rescueHammerBtn" data-i18n="watchAd">Смотреть рекламу</button>
                 <button class="modal-btn secondary" id="declineRescueBtn" data-i18n="newGameShort">Новая игра</button>
@@ -1244,9 +1274,10 @@
                     goldenBonus: '⭐ ЗОЛОТОЙ БОНУС x2!',
                     cleanAndGoldenBonus: '✨ ЧИСТОЕ ПОЛЕ + ⭐ ЗОЛОТО x4!',
                     tutorialStep1: 'Выбери блок',
-                    tutorialStep2: 'Свайпни или нажми чтобы повернуть',
-                    tutorialStep3: 'Ставь сюда',
-                    skipTutorial: 'Пропустить обучение',
+                    tutorialStep2: 'Перетащи на поле',
+                    tutorialStep3: 'Выбери следующий блок',
+                    tutorialStep4: 'Нажимай чтоб повернуть',
+                    tutorialStep5: 'Собери петлю',
                     settings: 'Настройки',
                     leaderboardTitle: '🏆 Таблица лидеров',
                     leaderboardHint: 'Таблица лидеров',
@@ -1255,21 +1286,6 @@
                     leaderboardError: 'Не удалось загрузить таблицу лидеров',
                     yourAccount: 'Ты:',
                     refresh: '🔄 Обновить',
-                    themesTitle: 'Цветовые темы',
-                    statTotalLoops: 'Всего петель',
-                    statCleanBoards: 'Чистых полей',
-                    theme_neon: 'Неоновая классика',
-                    theme_cyberpunk: 'Киберпанк',
-                    theme_matrix: 'Матрица',
-                    theme_retrowave: 'Ретровейв',
-                    theme_emerald: 'Изумруд',
-                    theme_gold: 'Золото и Обсидиан',
-                    req_default: 'Доступна сразу',
-                    req_cyberpunk: 'Собери 10 петель или рекорд 500',
-                    req_matrix: 'Собери 25 петель или рекорд 1500',
-                    req_retrowave: 'Макс Комбо x8 или рекорд 3000',
-                    req_emerald: '3 Чистых поля или 50 петель',
-                    req_gold: 'Рекорд 5000 очков или 100 петель',
                     sound: 'Звук',
                     volume: 'Громкость',
                     vibration: 'Вибрация',
@@ -1277,9 +1293,11 @@
                     close: 'Закрыть',
                     adTitle: '🔨 Реклама',
                     adText: 'Просмотрите рекламу, чтобы удалить блок',
+                    adUndoTitle: '↩️ Реклама',
+                    adUndoText: 'Просмотрите рекламу, чтобы отменить действие',
                     cancel: 'Отмена',
                     lastChance: 'Последний шанс',
-                    noMoves: 'Нет ходов. Смотреть рекламу и очистить до 3 блоков молотком?',
+                    noMoves: 'Нет ходов. Смотреть рекламу и разбить 1 блок молотком?',
                     watchAd: 'Смотреть рекламу',
                     newGameShort: 'Новая игра',
                     playAgain: 'Начать заново',
@@ -1288,13 +1306,14 @@
                     share: '📤 Поделиться',
                     adBanner: 'Рекламный баннер',
                     hammerHint: 'Удалить блок (смотреть рекламу)',
+                    undoHint: 'Отменить действие (смотреть рекламу)',
                     hammerIndicator: '🔨 Выбери блок для удаления',
                     finalScore: 'Счёт:',
                     finalLoops: 'Петель:',
                     points: 'очков',
                     shareText: 'Я набрал {score} очков в Loopix! А ты так сможешь?',
                     shareTitle: 'Loopix - Новый рекорд!',
-                    canYouBeat: 'А ТЫ ТАК СМОЖЕШЬ?'
+                    canYouBeat: 'А ТЫ ТАК СМОЖЕMS?'
                 },
                 en: {
                     score: 'Score',
@@ -1322,9 +1341,10 @@
                     goldenBonus: '⭐ GOLDEN BONUS x2!',
                     cleanAndGoldenBonus: '✨ ALL CLEAR + ⭐ GOLD x4!',
                     tutorialStep1: 'Select a block',
-                    tutorialStep2: 'Swipe or tap to rotate',
-                    tutorialStep3: 'Place here',
-                    skipTutorial: 'Skip tutorial',
+                    tutorialStep2: 'Drag to the board',
+                    tutorialStep3: 'Select the next block',
+                    tutorialStep4: 'Tap to rotate',
+                    tutorialStep5: 'Complete the loop',
                     settings: 'Settings',
                     leaderboardTitle: '🏆 Leaderboard',
                     leaderboardHint: 'Leaderboard',
@@ -1333,21 +1353,6 @@
                     leaderboardError: 'Failed to load leaderboard',
                     yourAccount: 'You:',
                     refresh: '🔄 Refresh',
-                    themesTitle: 'Color Themes',
-                    statTotalLoops: 'Total Loops',
-                    statCleanBoards: 'All Clears',
-                    theme_neon: 'Classic Neon',
-                    theme_cyberpunk: 'Cyberpunk',
-                    theme_matrix: 'Matrix',
-                    theme_retrowave: 'Retrowave',
-                    theme_emerald: 'Emerald',
-                    theme_gold: 'Gold & Obsidian',
-                    req_default: 'Unlocked by default',
-                    req_cyberpunk: 'Clear 10 loops or score 500',
-                    req_matrix: 'Clear 25 loops or score 1500',
-                    req_retrowave: 'Max Combo x8 or score 3000',
-                    req_emerald: '3 All Clears or 50 loops',
-                    req_gold: 'Score 5000 or 100 loops',
                     sound: 'Sound',
                     volume: 'Volume',
                     vibration: 'Vibration',
@@ -1355,9 +1360,11 @@
                     close: 'Close',
                     adTitle: '🔨 Ad',
                     adText: 'Watch an ad to remove a block',
+                    adUndoTitle: '↩️ Ad',
+                    adUndoText: 'Watch an ad to undo your last move',
                     cancel: 'Cancel',
                     lastChance: 'Last Chance',
-                    noMoves: 'No moves left. Watch ad to clear up to 3 blocks?',
+                    noMoves: 'No moves left. Watch an ad to break 1 block with the hammer?',
                     watchAd: 'Watch Ad',
                     newGameShort: 'New Game',
                     playAgain: 'Play Again',
@@ -1366,6 +1373,7 @@
                     share: '📤 Share',
                     adBanner: 'Advertisement',
                     hammerHint: 'Remove block (watch ad)',
+                    undoHint: 'Undo move (watch ad)',
                     hammerIndicator: '🔨 Select a block to remove',
                     finalScore: 'Score:',
                     finalLoops: 'Loops:',
@@ -1420,7 +1428,6 @@
                 this.pendingScore = null;
             }
 
-            // Получение данных игрока из Telegram WebApp (или локального фоллбэка при тесте из браузера)
             getTelegramPlayer() {
                 const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
                 if (tgUser && tgUser.id) {
@@ -1576,22 +1583,6 @@
                 setTimeout(hideLoader, 800);
             }
         });
-        
-        const YaGames = {
-            init: () => Promise.resolve({
-                getAdv: () => ({
-                    showFullscreenAdv: () => Promise.resolve(),
-                    showRewardedVideo: () => Promise.resolve({ type: 'rewarded', rewarded: true }),
-                    showBannerAdv: () => Promise.resolve()
-                }),
-                getLeaderboards: () => ({
-                    setLeaderboardScore: () => Promise.resolve()
-                }),
-                getPlayer: () => ({
-                    getName: () => 'Player'
-                })
-            })
-        };
         
         class AudioManager {
             constructor() {
@@ -1892,7 +1883,6 @@
         const audioManager = new AudioManager();
         const vibrationManager = new VibrationManager();
 
-        // 6 визуальных цветовых тем, которые автоматически сменяют друг друга после зачистки поля
         const THEMES = {
             neon: {
                 id: 'neon',
@@ -2019,6 +2009,13 @@
             refreshColor() {
                 this.color = COLORS.blocks[this.type] || '#4fc3f7';
             }
+            clone() {
+                const b = new Block(this.type, this.variant, this.isGolden);
+                b.rotation = this.rotation;
+                b.connectors = [...this.connectors];
+                b.color = this.color;
+                return b;
+            }
         }
         
         class Loopix {
@@ -2027,6 +2024,8 @@
                 this.ctx = this.canvas.getContext('2d');
                 this.dragFloatingCanvas = document.getElementById('dragFloatingCanvas');
                 this.dragFloatingCtx = this.dragFloatingCanvas.getContext('2d');
+                this.tutorialGhostCanvas = document.getElementById('tutorialGhostCanvas');
+                this.tutorialGhostCtx = this.tutorialGhostCanvas.getContext('2d');
                 this.gridSize = 6;
                 this.boardCssSize = 300;
                 this.cellSize = 50;
@@ -2061,7 +2060,11 @@
                 this.hammerUsed = false;
                 this.hammerAvailable = true;
                 this.isRescueHammer = false;
+                this.rescueUsed = false;
                 this.nextHammerAt = 2000;
+                this.undoState = null;
+                this.pendingAdAction = null;
+
                 this.lastClickTime = 0;
                 this.clickDelay = 120;
                 this.shakeIntensity = 0;
@@ -2078,9 +2081,10 @@
                 this.dragStartSlot = -1;
                 this.dragStartX = 0;
                 this.dragStartY = 0;
-                this.dragRotated = false;
+                this.dragStartTime = 0;
+                this.maxDragDist = 0;
                 this.isDraggingToBoard = false;
-                this.dragThreshold = 20;
+                this.dragThreshold = 4;
 
                 this.canvasPointerDown = false;
                 this.canvasStartX = 0;
@@ -2146,14 +2150,16 @@
                 const dpr = Math.min(window.devicePixelRatio || 1, 3);
                 const availW = window.innerWidth - 32;
 
-                const scoreEl = document.getElementById('scoreBoard');
+                const topBannerEl = this.tutorialActive
+                    ? document.getElementById('tutorialBanner')
+                    : document.getElementById('scoreBoard');
                 const previewEl = document.getElementById('previewPanel');
                 const titleEl = document.querySelector('h1');
                 const bannerEl = document.getElementById('yandexBanner');
 
                 let availH = window.innerHeight - 310;
-                if (scoreEl && previewEl && titleEl && bannerEl) {
-                    const topUsed = scoreEl.getBoundingClientRect().bottom;
+                if (topBannerEl && previewEl && titleEl && bannerEl) {
+                    const topUsed = topBannerEl.getBoundingClientRect().bottom;
                     const bannerTop = bannerEl.getBoundingClientRect().top || (window.innerHeight - 50);
                     const previewH = previewEl.getBoundingClientRect().height || 100;
                     const computedFreeH = bannerTop - topUsed - previewH - 36;
@@ -2165,6 +2171,11 @@
                 const rawSize = Math.max(228, Math.min(availW, availH, 354));
                 this.boardCssSize = Math.floor(rawSize / this.gridSize) * this.gridSize;
                 this.cellSize = this.boardCssSize / this.gridSize;
+
+                // Концентрическое скругление игрового поля относительно угловых ячеек и блоков
+                const cellCornerR = Math.round(this.cellSize * 0.28);
+                const boardCornerR = cellCornerR + 3;
+                this.canvas.style.borderRadius = `${boardCornerR}px`;
 
                 this.canvas.style.width = `${this.boardCssSize}px`;
                 this.canvas.style.height = `${this.boardCssSize}px`;
@@ -2190,6 +2201,14 @@
                     this.dragFloatingCanvas.width = Math.round(68 * dpr);
                     this.dragFloatingCanvas.height = Math.round(68 * dpr);
                     this.dragFloatingCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                }
+
+                if (this.tutorialGhostCanvas) {
+                    this.tutorialGhostCanvas.style.width = `${window.innerWidth}px`;
+                    this.tutorialGhostCanvas.style.height = `${window.innerHeight}px`;
+                    this.tutorialGhostCanvas.width = Math.round(window.innerWidth * dpr);
+                    this.tutorialGhostCanvas.height = Math.round(window.innerHeight * dpr);
+                    this.tutorialGhostCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
                 }
 
                 if (this.grid.length > 0) {
@@ -2218,6 +2237,9 @@
                 });
                 document.getElementById('hammerBtn').addEventListener('click', (e) => {
                     e.preventDefault(); e.stopPropagation(); this.useHammer();
+                });
+                document.getElementById('undoBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); e.stopPropagation(); this.useUndo();
                 });
                 document.getElementById('soundToggle').addEventListener('click', (e) => {
                     e.preventDefault(); e.stopPropagation(); this.toggleSound();
@@ -2255,19 +2277,10 @@
                 document.getElementById('closeShareBtn').addEventListener('click', (e) => {
                     e.preventDefault(); e.stopPropagation(); this.closeShareModal();
                 });
-                document.getElementById('tutorialSkip').addEventListener('click', (e) => {
-                    e.preventDefault(); e.stopPropagation(); this.skipTutorial();
-                });
                 document.querySelectorAll('.lang-option').forEach(opt => {
                     opt.addEventListener('click', (e) => {
                         e.preventDefault(); e.stopPropagation();
                         this.setLanguage(opt.dataset.lang);
-                    });
-                });
-                document.querySelectorAll('.tutorial-text').forEach(el => {
-                    el.addEventListener('click', (e) => {
-                        e.preventDefault(); e.stopPropagation();
-                        if (this.tutorialActive) this.nextTutorialStep();
                     });
                 });
             }
@@ -2375,7 +2388,6 @@
                     if (e && e.preventDefault) e.preventDefault();
 
                     if (this.tutorialActive) {
-                        this.skipTutorial();
                         return;
                     }
 
@@ -2386,12 +2398,12 @@
                     const rescueModal = document.getElementById('rescueModal');
                     const gameOverModal = document.getElementById('gameOverModal');
 
-                    if (leaderboardModal.classList.contains('show')) {
+                    if (adModal.classList.contains('show')) {
+                        this.cancelAd();
+                    } else if (leaderboardModal.classList.contains('show')) {
                         this.closeLeaderboard();
                     } else if (shareModal.classList.contains('show')) {
                         this.closeShareModal();
-                    } else if (adModal.classList.contains('show')) {
-                        this.cancelAd();
                     } else if (settingsModal.classList.contains('show')) {
                         this.closeSettings();
                     } else if (rescueModal.classList.contains('show')) {
@@ -2400,9 +2412,11 @@
                         this.newGame();
                     } else if (this.hammerMode) {
                         this.hammerMode = false;
-                        this.hammerUsed = false;
-                        this.hammerAvailable = true;
-                        document.getElementById('hammerBtn').classList.remove('disabled');
+                        if (!this.isRescueHammer) {
+                            this.hammerUsed = false;
+                            this.hammerAvailable = true;
+                            document.getElementById('hammerBtn').classList.remove('disabled');
+                        }
                         document.getElementById('hammerIndicator').classList.remove('show');
                         this.canvas.classList.remove('hammer-mode', 'hammer-target');
                         this.saveGame();
@@ -2420,6 +2434,7 @@
             
             updateUITexts() {
                 document.getElementById('hammerBtn').title = I18N.t('hammerHint');
+                document.getElementById('undoBtn').title = I18N.t('undoHint');
                 document.getElementById('leaderboardBtn').title = I18N.t('leaderboardHint');
                 document.getElementById('hammerIndicator').textContent = I18N.t('hammerIndicator');
                 if (this.isGameOver) {
@@ -2467,7 +2482,7 @@
             saveGame() {
                 if (this.isGameOver || this.tutorialActive) return;
                 const saveData = {
-                    version: 3,
+                    version: 4,
                     theme: this.currentTheme,
                     score: this.score,
                     loops: this.loops,
@@ -2476,6 +2491,7 @@
                     difficultyLevel: this.difficultyLevel,
                     hammerMode: this.hammerMode,
                     isRescueHammer: this.isRescueHammer,
+                    rescueUsed: this.rescueUsed,
                     hammerUsed: this.hammerUsed,
                     hammerAvailable: this.hammerAvailable,
                     nextHammerAt: this.nextHammerAt,
@@ -2509,9 +2525,11 @@
                     this.difficultyLevel = Number(data.difficultyLevel) || 0;
                     this.hammerMode = Boolean(data.hammerMode);
                     this.isRescueHammer = Boolean(data.isRescueHammer);
+                    this.rescueUsed = Boolean(data.rescueUsed);
                     this.hammerUsed = Boolean(data.hammerUsed);
                     this.hammerAvailable = data.hammerAvailable !== false;
                     this.nextHammerAt = Number(data.nextHammerAt) || 2000;
+                    this.undoState = null;
 
                     this.grid = data.grid.map(row => row.map(blockData => {
                         if (!blockData || !BLOCK_TYPES[blockData.type]) return null;
@@ -2545,6 +2563,7 @@
                     this.updateSlotClasses();
                     this.renderPreviews();
                     this.updateScore();
+                    this.updateUndoButtonUI();
 
                     document.getElementById('hammerBtn').classList.toggle('disabled', this.hammerUsed);
                     document.getElementById('hammerIndicator').classList.toggle('show', this.hammerMode);
@@ -2574,6 +2593,69 @@
                     this.nextHammerAt = this.score + 2000;
                     document.getElementById('hammerBtn').classList.remove('disabled');
                 }
+            }
+
+            saveUndoSnapshot() {
+                if (this.tutorialActive) return;
+                this.undoState = {
+                    theme: this.currentTheme,
+                    score: this.score,
+                    loops: this.loops,
+                    combo: this.combo,
+                    difficultyLevel: this.difficultyLevel,
+                    grid: this.grid.map(row => row.map(b => b ? b.clone() : null)),
+                    previewBlocks: this.previewBlocks.map(b => b ? b.clone() : null),
+                    selectedSlot: this.selectedSlot
+                };
+                this.updateUndoButtonUI();
+            }
+
+            updateUndoButtonUI() {
+                const undoBtn = document.getElementById('undoBtn');
+                if (!undoBtn) return;
+                const canUndo = Boolean(this.undoState && !this.isGameOver && !this.tutorialActive && !this.hammerMode);
+                undoBtn.classList.toggle('disabled', !canUndo);
+            }
+
+            useUndo() {
+                if (!this.canProcessClick() || !this.undoState || this.isGameOver || this.tutorialActive || this.hammerMode) return;
+                this.showRewardedAd('undo');
+            }
+
+            performUndo() {
+                if (!this.undoState) return;
+                if (this.spawnTimeout) {
+                    clearTimeout(this.spawnTimeout);
+                    this.spawnTimeout = null;
+                }
+                const snap = this.undoState;
+                this.undoState = null;
+
+                if (snap.theme && snap.theme !== this.currentTheme) {
+                    this.applyTheme(snap.theme, true);
+                }
+                this.score = snap.score;
+                this.displayScore = snap.score;
+                this.loops = snap.loops;
+                this.combo = snap.combo;
+                this.difficultyLevel = snap.difficultyLevel;
+                this.grid = snap.grid.map(row => row.map(b => b ? b.clone() : null));
+                this.previewBlocks = snap.previewBlocks.map(b => b ? b.clone() : null);
+                this.selectedSlot = snap.selectedSlot;
+
+                this.lastLoopCells.clear();
+                this.chainGlowColors.clear();
+                this.dyingBlocks = [];
+                this.boardDimAlpha = 0;
+
+                this.rebuildGridCache();
+                this.updateSlotClasses();
+                this.renderPreviews();
+                this.updateScore();
+                this.updateUndoButtonUI();
+                audioManager.playRotate();
+                vibrationManager.lightVibration();
+                this.saveGame();
             }
             
             toggleSound() { audioManager.toggle(); }
@@ -2637,28 +2719,44 @@
             }
             
             checkTutorial() {
-                if (!Storage.get('loopixTutorial')) this.startTutorial();
+                if (!Storage.get('loopixTutorialV2')) this.startTutorial();
                 else { this.placeInitialBlocks(); this.generateNewSet(); }
             }
             
             startTutorial() {
                 this.tutorialActive = true;
                 this.tutorialStep = 1;
-                document.getElementById('tutorialOverlay').classList.add('show');
+                document.getElementById('scoreBoard').style.display = 'none';
+                document.getElementById('tutorialBanner').classList.add('show');
+                document.getElementById('tutorialGhostCanvas').classList.add('show');
+                document.getElementById('slot2').style.display = 'none';
+
+                ['hammerBtn', 'undoBtn', 'leaderboardBtn', 'settingsBtn'].forEach(id => {
+                    document.getElementById(id)?.classList.add('tutorial-locked');
+                });
+
                 this.setupTutorialField();
-                setTimeout(() => this.updateTutorialStep(), 100);
+                this.setupHighDPICanvas();
+                this.updateTutorialStep();
             }
             
             setupTutorialField() {
                 this.difficultyLevel = 0;
                 this.setupGrid();
-                this.grid[2][2] = new Block('CORNER', 1);
-                this.grid[2][3] = new Block('CORNER', 2);
-                this.grid[3][3] = new Block('CORNER', 3);
-                this.previewBlocks[0] = new Block('CORNER', 1);
-                this.previewBlocks[1] = null;
+                // Фигура 3x2 (x = 1..3, y = 2..3), в которой не хватает 2 блоков:
+                // - палочки в (2, 2)
+                // - уголка в (1, 3)
+                this.grid[2][1] = new Block('CORNER', 1);   // [0, 1, 1, 0] (вправо и вниз)
+                this.grid[2][3] = new Block('CORNER', 2);   // [0, 0, 1, 1] (вниз и влево)
+                this.grid[3][3] = new Block('CORNER', 3);   // [1, 0, 0, 1] (вверх и влево)
+                this.grid[3][2] = new Block('STRAIGHT', 1); // [0, 1, 0, 1] (горизонтальная палочка)
+
+                // В панели выбора 2 блока: палочка и уголок (повернут на 2 оборота от нужного [1,1,0,0])
+                this.previewBlocks[0] = new Block('STRAIGHT', 1); // [0, 1, 0, 1] — уже правильно повернута
+                this.previewBlocks[1] = new Block('CORNER', 2);   // [0, 0, 1, 1] — нужно повернуть 2 раза до [1, 1, 0, 0]
                 this.previewBlocks[2] = null;
                 this.selectedSlot = null;
+
                 this.rebuildGridCache();
                 this.updateSlotClasses();
                 requestAnimationFrame(() => { this.renderPreviews(); });
@@ -2666,71 +2764,73 @@
             
             updateTutorialStep() {
                 if (!this.tutorialActive) return;
-                document.querySelectorAll('.tutorial-step').forEach(el => el.classList.remove('active'));
-                const activeStepEl = document.getElementById('step' + this.tutorialStep);
-                if (activeStepEl) activeStepEl.classList.add('active');
 
-                const panel = document.getElementById('previewPanel');
+                const stepEl = document.getElementById('tutorialBannerStep');
+                const textEl = document.getElementById('tutorialBannerText');
+                stepEl.textContent = `${this.tutorialStep}/5`;
+                textEl.textContent = I18N.t(`tutorialStep${this.tutorialStep}`);
+
                 const canvas = document.getElementById('mainCanvas');
-                const slots = document.querySelectorAll('.preview-slot');
-                const target = document.getElementById('tutorialTarget');
-                
-                slots.forEach(slot => { slot.classList.remove('tutorial-active', 'disabled'); slot.style.pointerEvents = 'none'; });
+                const slot0 = document.getElementById('slot0');
+                const slot1 = document.getElementById('slot1');
+
+                [slot0, slot1].forEach(slot => {
+                    slot.classList.remove('tutorial-active', 'disabled');
+                    slot.style.pointerEvents = 'none';
+                });
                 canvas.classList.remove('canvas-tutorial');
                 canvas.style.pointerEvents = 'none';
-                target.style.display = 'none';
-                
+
                 if (this.tutorialStep === 1) {
-                    const step1 = document.getElementById('step1');
-                    const rect = panel.getBoundingClientRect();
-                    const stepH = step1.offsetHeight || 50;
-                    step1.style.top = Math.max(12, rect.top - stepH - 14) + 'px';
-                    step1.style.left = '50%';
-                    step1.style.transform = 'translateX(-50%)';
-                    document.getElementById('slot0').classList.add('tutorial-active');
-                    document.getElementById('slot0').style.pointerEvents = 'auto';
+                    // 1) Выбери блок (нажать на палочку в slot0)
+                    slot0.classList.add('tutorial-active');
+                    slot0.style.pointerEvents = 'auto';
+                    slot1.classList.add('disabled');
                 } else if (this.tutorialStep === 2) {
-                    const step2 = document.getElementById('step2');
-                    const rect = document.getElementById('slot0').getBoundingClientRect();
-                    const stepH = step2.offsetHeight || 56;
-                    step2.style.top = Math.max(12, rect.top - stepH - 14) + 'px';
-                    step2.style.left = '50%';
-                    step2.style.transform = 'translateX(-50%)';
-                    slots.forEach((s, i) => { if (i !== 0) s.classList.add('disabled'); });
-                    const slot0 = document.getElementById('slot0');
+                    // 2) Перетащи на поле (поставить палочку в (2, 2), вращение отключено)
                     slot0.classList.add('tutorial-active', 'selected');
                     slot0.style.pointerEvents = 'auto';
-                } else if (this.tutorialStep === 3) {
-                    const step3 = document.getElementById('step3');
-                    const canvasRect = canvas.getBoundingClientRect();
-                    step3.style.top = (canvasRect.top + 10) + 'px';
-                    step3.style.left = '50%';
-                    step3.style.transform = 'translateX(-50%)';
-                    slots.forEach((s, i) => {
-                        if (i !== 0) s.classList.add('disabled');
-                    });
-                    document.getElementById('slot0').style.pointerEvents = 'auto';
+                    slot1.classList.add('disabled');
                     canvas.classList.add('canvas-tutorial');
                     canvas.style.pointerEvents = 'auto';
-                    target.style.width = this.cellSize + 'px';
-                    target.style.height = this.cellSize + 'px';
-                    target.style.left = (canvasRect.left + 2 * this.cellSize) + 'px';
-                    target.style.top = (canvasRect.top + 3 * this.cellSize) + 'px';
-                    target.style.display = 'block';
+                } else if (this.tutorialStep === 3) {
+                    // 3) Выбери следующий блок (нажать на уголок в slot1)
+                    slot0.classList.add('disabled');
+                    slot1.classList.add('tutorial-active');
+                    slot1.style.pointerEvents = 'auto';
+                } else if (this.tutorialStep === 4) {
+                    // 4) Нажимай чтоб повернуть (нажать 2 раза на уголок в slot1)
+                    slot0.classList.add('disabled');
+                    slot1.classList.add('tutorial-active', 'selected');
+                    slot1.style.pointerEvents = 'auto';
+                } else if (this.tutorialStep === 5) {
+                    // 5) Собери петлю (перенести уголок на (1, 3), вращение отключено)
+                    slot0.classList.add('disabled');
+                    slot1.classList.add('tutorial-active', 'selected');
+                    slot1.style.pointerEvents = 'auto';
+                    canvas.classList.add('canvas-tutorial');
+                    canvas.style.pointerEvents = 'auto';
                 }
             }
             
             nextTutorialStep() {
                 this.tutorialStep++;
-                if (this.tutorialStep > 3) this.endTutorial();
+                if (this.tutorialStep > 5) this.endTutorial();
                 else this.updateTutorialStep();
             }
             
             endTutorial() {
                 this.tutorialActive = false;
-                document.getElementById('tutorialOverlay').classList.remove('show');
-                document.getElementById('tutorialTarget').style.display = 'none';
-                Storage.set('loopixTutorial', 'true');
+                document.getElementById('tutorialBanner').classList.remove('show');
+                document.getElementById('scoreBoard').style.display = '';
+                document.getElementById('tutorialGhostCanvas').classList.remove('show');
+                document.getElementById('slot2').style.display = '';
+
+                ['hammerBtn', 'undoBtn', 'leaderboardBtn', 'settingsBtn'].forEach(id => {
+                    document.getElementById(id)?.classList.remove('tutorial-locked');
+                });
+
+                Storage.set('loopixTutorialV2', 'true');
                 document.querySelectorAll('.preview-slot').forEach(s => {
                     s.classList.remove('tutorial-active', 'disabled');
                     s.style.pointerEvents = '';
@@ -2739,13 +2839,13 @@
                 canvas.classList.remove('canvas-tutorial');
                 canvas.style.pointerEvents = '';
                 this.difficultyLevel = 0;
+                this.setupHighDPICanvas();
                 this.setupGrid();
                 this.placeInitialBlocks();
                 this.generateNewSet();
+                this.updateUndoButtonUI();
                 this.saveGame();
             }
-            
-            skipTutorial() { this.endTutorial(); }
 
             countBlocksOnBoard() {
                 let count = 0;
@@ -2997,8 +3097,10 @@
             checkGameOver() {
                 if (this.canPlaceAny()) return;
                 this.isGameOver = true;
+                this.updateUndoButtonUI();
                 
-                if (this.hammerAvailable && !this.hammerUsed) {
+                // Предлагаем молоток как последний шанс даже если обычный молоток уже использовался в игре
+                if (!this.rescueUsed) {
                     document.getElementById('rescueModal').classList.add('show');
                     I18N.updateUI();
                 } else {
@@ -3028,7 +3130,7 @@
                 document.getElementById('rescueModal').classList.remove('show');
                 this.isGameOver = false;
                 this.isRescueHammer = true;
-                this.useHammer();
+                this.showRewardedAd('rescue_hammer');
             }
             
             declineRescue() {
@@ -3195,12 +3297,17 @@
             
             startDrag(idx, cx, cy, pointerType = 'touch') {
                 if (this.isGameOver || !this.previewBlocks[idx]) return;
+                if (this.tutorialActive) {
+                    if ((this.tutorialStep === 1 || this.tutorialStep === 2) && idx !== 0) return;
+                    if ((this.tutorialStep === 3 || this.tutorialStep === 4 || this.tutorialStep === 5) && idx !== 1) return;
+                }
                 this.dragActive = true;
                 this.dragSlot = idx;
                 this.dragStartSlot = idx;
                 this.dragStartX = cx;
                 this.dragStartY = cy;
-                this.dragRotated = false;
+                this.dragStartTime = performance.now();
+                this.maxDragDist = 0;
                 this.isDraggingToBoard = false;
                 this.dragPointerType = pointerType;
                 this.updateSlotClasses();
@@ -3212,9 +3319,13 @@
                 const dx = cx - this.dragStartX;
                 const dy = cy - this.dragStartY;
                 const dist = Math.hypot(dx, dy);
+                if (dist > this.maxDragDist) {
+                    this.maxDragDist = dist;
+                }
 
-                const canDragToBoard = !this.tutorialActive || this.tutorialStep === 3;
-                if (!this.isDraggingToBoard && !this.dragRotated && canDragToBoard && dy < -24 && Math.abs(dy) > Math.abs(dx) * 1.15) {
+                // Любое движение пальца (>= 4px) вытягивает блок на поле и никогда не вращает его
+                const canDragToBoard = !this.tutorialActive || this.tutorialStep === 2 || this.tutorialStep === 5;
+                if (!this.isDraggingToBoard && canDragToBoard && this.maxDragDist >= this.dragThreshold) {
                     this.isDraggingToBoard = true;
                     this.selectedSlot = this.dragSlot;
                     vibrationManager.lightVibration();
@@ -3225,35 +3336,20 @@
                     const useTouchOffset = (pointerType === 'touch' || this.dragPointerType === 'touch');
                     this.updateFloatingDragPreview(cx, cy, useTouchOffset);
                     this.hoverCell = this.getCellFromClientPos(cx, cy, useTouchOffset);
-                    return;
-                }
-
-                if (!this.dragRotated && dist >= this.dragThreshold) {
-                    this.previewBlocks[this.dragSlot].rotate();
-                    audioManager.playRotate();
-                    vibrationManager.lightVibration();
-                    this.renderPreviews();
-                    this.dragRotated = true;
-                    if (!this.tutorialActive) this.saveGame();
-                    if (this.tutorialActive && this.tutorialStep === 2 && this.dragSlot === 0) {
-                        const b = this.previewBlocks[0];
-                        if (b.connectors[0] === 1 && b.connectors[1] === 1 && b.connectors[2] === 0 && b.connectors[3] === 0) {
-                            this.nextTutorialStep();
-                        }
-                    }
                 }
             }
             
             endDrag(cx, cy) {
                 if (!this.dragActive) return;
                 const slotIdx = this.dragStartSlot;
-                const wasRotated = this.dragRotated;
                 const wasBoardDrag = this.isDraggingToBoard;
+                const totalMoved = Math.max(this.maxDragDist, Math.hypot(cx - this.dragStartX, cy - this.dragStartY));
+                const pressDuration = performance.now() - this.dragStartTime;
 
                 this.dragActive = false;
                 this.dragSlot = -1;
                 this.dragStartSlot = -1;
-                this.dragRotated = false;
+                this.maxDragDist = 0;
                 this.isDraggingToBoard = false;
                 if (this.dragFloatingCanvas) {
                     this.dragFloatingCanvas.style.display = 'none';
@@ -3264,26 +3360,31 @@
                     const gy = this.hoverCell.y;
                     this.hoverCell = { x: -1, y: -1 };
                     if (gx >= 0 && gy >= 0 && !this.grid[gy][gx]) {
-                        if (this.tutorialActive && this.tutorialStep === 3) {
-                            if (gx === 2 && gy === 3) {
+                        if (this.tutorialActive) {
+                            if (this.tutorialStep === 2 && gx === 2 && gy === 2 && slotIdx === 0) {
                                 this.placeBlock(gx, gy, slotIdx);
                                 return;
                             }
-                        } else if (!this.tutorialActive) {
+                            if (this.tutorialStep === 5 && gx === 1 && gy === 3 && slotIdx === 1) {
+                                this.placeBlock(gx, gy, slotIdx);
+                                return;
+                            }
+                        } else {
                             this.placeBlock(gx, gy, slotIdx);
                             return;
                         }
                     }
-                    this.selectedSlot = slotIdx;
                     this.updateSlotClasses();
+                    if (this.tutorialActive) this.updateTutorialStep();
                     return;
                 }
 
-                if (wasRotated) {
-                    this.selectedSlot = slotIdx;
-                    this.updateSlotClasses();
-                } else {
+                // Поворот/выбор осуществляется ТОЛЬКО коротким четким нажатием (без свайпа и без долгого удержания)
+                if (totalMoved < this.dragThreshold && pressDuration < 260) {
                     this.handleSlotClick(slotIdx);
+                } else {
+                    this.updateSlotClasses();
+                    if (this.tutorialActive) this.updateTutorialStep();
                 }
             }
 
@@ -3291,13 +3392,14 @@
                 this.dragActive = false;
                 this.dragSlot = -1;
                 this.dragStartSlot = -1;
-                this.dragRotated = false;
+                this.maxDragDist = 0;
                 this.isDraggingToBoard = false;
                 this.hoverCell = { x: -1, y: -1 };
                 if (this.dragFloatingCanvas) {
                     this.dragFloatingCanvas.style.display = 'none';
                 }
                 this.updateSlotClasses();
+                if (this.tutorialActive) this.updateTutorialStep();
             }
             
             handleSlotClick(idx) {
@@ -3305,19 +3407,33 @@
                 
                 if (this.tutorialActive) {
                     if (this.tutorialStep === 1 && idx === 0) {
-                        this.selectedSlot = idx;
+                        this.selectedSlot = 0;
+                        vibrationManager.lightVibration();
                         this.updateSlotClasses();
                         this.renderPreviews();
                         this.nextTutorialStep();
-                    } else if (this.tutorialStep === 2 && idx === 0) {
-                        this.previewBlocks[0].rotate();
+                    } else if (this.tutorialStep === 2) {
+                        // На шаге 2 вращать палочку нельзя
+                        return;
+                    } else if (this.tutorialStep === 3 && idx === 1) {
+                        this.selectedSlot = 1;
+                        vibrationManager.lightVibration();
+                        this.updateSlotClasses();
+                        this.renderPreviews();
+                        this.nextTutorialStep();
+                    } else if (this.tutorialStep === 4 && idx === 1) {
+                        this.previewBlocks[1].rotate();
                         audioManager.playRotate();
                         vibrationManager.lightVibration();
                         this.renderPreviews();
-                        const b = this.previewBlocks[0];
+                        const b = this.previewBlocks[1];
+                        // Когда уголок повернут 2 раза до [1, 1, 0, 0] (вверх и вправо), переходим к шагу 5
                         if (b.connectors[0] === 1 && b.connectors[1] === 1 && b.connectors[2] === 0 && b.connectors[3] === 0) {
                             this.nextTutorialStep();
                         }
+                    } else if (this.tutorialStep === 5) {
+                        // На шаге 5 вращать уже правильно повернутый уголок нельзя
+                        return;
                     }
                     return;
                 }
@@ -3360,8 +3476,12 @@
                 }
                 
                 if (this.selectedSlot === null) return;
-                if (this.tutorialActive && this.tutorialStep === 3) {
-                    if (gx === 2 && gy === 3 && !this.grid[gy][gx]) this.placeBlock(gx, gy, this.selectedSlot);
+                if (this.tutorialActive) {
+                    if (this.tutorialStep === 2 && gx === 2 && gy === 2 && !this.grid[gy][gx] && this.selectedSlot === 0) {
+                        this.placeBlock(gx, gy, 0);
+                    } else if (this.tutorialStep === 5 && gx === 1 && gy === 3 && !this.grid[gy][gx] && this.selectedSlot === 1) {
+                        this.placeBlock(gx, gy, 1);
+                    }
                     return;
                 }
                 if (!this.grid[gy][gx]) {
@@ -3372,6 +3492,11 @@
             placeBlock(x, y, slotIdx) {
                 const block = this.previewBlocks[slotIdx];
                 if (!block) return;
+
+                if (!this.tutorialActive) {
+                    this.saveUndoSnapshot();
+                }
+
                 this.grid[y][x] = block;
                 this.previewBlocks[slotIdx] = null;
                 audioManager.playPlace(block.type);
@@ -3379,19 +3504,26 @@
                 if (this.selectedSlot === slotIdx) this.selectedSlot = null;
                 this.rebuildGridCache();
                 
-                if (this.tutorialActive && this.tutorialStep === 3) {
-                    const loops = this.findLoops();
-                    if (loops.length) {
-                        this.combo = loops.length;
-                        this.boardDimAlpha = 0.55;
-                        this.assignGlowColors(loops);
-                        this.clearLoops(loops, 1);
-                        setTimeout(() => this.nextTutorialStep(), 1500);
+                if (this.tutorialActive) {
+                    if (this.tutorialStep === 2) {
+                        this.updateSlotClasses();
+                        this.renderPreviews();
+                        this.nextTutorialStep();
+                        return;
+                    } else if (this.tutorialStep === 5) {
+                        const loops = this.findLoops();
+                        if (loops.length) {
+                            this.combo = loops.length;
+                            this.boardDimAlpha = 0.55;
+                            this.assignGlowColors(loops);
+                            this.clearLoops(loops, 1);
+                            setTimeout(() => this.nextTutorialStep(), 1400);
+                        }
+                        this.updateSlotClasses();
+                        this.renderPreviews();
+                        this.updateScore();
+                        return;
                     }
-                    this.updateSlotClasses();
-                    this.renderPreviews();
-                    this.updateScore();
-                    return;
                 }
                 
                 const loops = this.findLoops();
@@ -3425,14 +3557,26 @@
                 this.updateSlotClasses();
                 this.renderPreviews();
                 this.updateScore();
+                this.updateUndoButtonUI();
                 if (!this.isGameOver && !this.tutorialActive) {
                     this.saveGame();
                 }
             }
-            
-            useHammer() {
-                if (!this.canProcessClick() || this.hammerUsed || this.isGameOver || this.tutorialActive) return;
+
+            showRewardedAd(actionType) {
                 if (this.adInterval) clearInterval(this.adInterval);
+                this.pendingAdAction = actionType;
+                const titleEl = document.getElementById('adModalTitle');
+                const textEl = document.getElementById('adModalText');
+
+                if (actionType === 'undo') {
+                    titleEl.setAttribute('data-i18n', 'adUndoTitle');
+                    textEl.setAttribute('data-i18n', 'adUndoText');
+                } else {
+                    titleEl.setAttribute('data-i18n', 'adTitle');
+                    textEl.setAttribute('data-i18n', 'adText');
+                }
+
                 document.getElementById('adModal').classList.add('show');
                 I18N.updateUI();
                 let timer = 5;
@@ -3446,15 +3590,28 @@
                         clearInterval(this.adInterval);
                         this.adInterval = null;
                         document.getElementById('adModal').classList.remove('show');
-                        this.activateHammer();
+                        const completedAction = this.pendingAdAction;
+                        this.pendingAdAction = null;
+                        if (completedAction === 'undo') {
+                            this.performUndo();
+                        } else {
+                            this.activateHammer();
+                        }
                     }
                 }, 1000);
+            }
+            
+            useHammer() {
+                if (!this.canProcessClick() || this.hammerUsed || this.isGameOver || this.tutorialActive) return;
+                this.showRewardedAd('hammer');
             }
             
             cancelAd() {
                 if (this.adInterval) { clearInterval(this.adInterval); this.adInterval = null; }
                 document.getElementById('adModal').classList.remove('show');
-                if (this.isRescueHammer && !this.canPlaceAny()) {
+                const cancelledAction = this.pendingAdAction;
+                this.pendingAdAction = null;
+                if (cancelledAction === 'rescue_hammer' && !this.canPlaceAny()) {
                     this.isRescueHammer = false;
                     this.checkGameOver();
                 }
@@ -3462,42 +3619,36 @@
             
             activateHammer() {
                 this.hammerMode = true;
-                this.hammerUsed = true;
-                this.hammerAvailable = false;
-                this.nextHammerAt = this.score + 2000;
-                document.getElementById('hammerBtn').classList.add('disabled');
+                if (this.isRescueHammer) {
+                    this.rescueUsed = true;
+                } else {
+                    this.hammerUsed = true;
+                    this.hammerAvailable = false;
+                    this.nextHammerAt = this.score + 2000;
+                    document.getElementById('hammerBtn').classList.add('disabled');
+                }
                 document.getElementById('hammerIndicator').classList.add('show');
                 this.canvas.classList.add('hammer-mode');
                 this.selectedSlot = null;
                 this.updateSlotClasses();
+                this.updateUndoButtonUI();
                 this.saveGame();
             }
             
             removeBlock(x, y) {
-                const targets = [{ x, y }];
-                if (this.isRescueHammer) {
-                    for (let i = 0; i < 4 && targets.length < 3; i++) {
-                        const nx = x + DIRS_4[i][0];
-                        const ny = y + DIRS_4[i][1];
-                        if (nx >= 0 && nx < this.gridSize && ny >= 0 && ny < this.gridSize && this.grid[ny][nx]) {
-                            targets.push({ x: nx, y: ny });
-                        }
-                    }
-                    this.isRescueHammer = false;
-                }
-
-                targets.forEach(pos => {
-                    this.createExplosion(pos.x, pos.y, '#ffd54f');
-                    this.grid[pos.y][pos.x] = null;
-                });
+                // И обычный молоток, и молоток "Последний шанс" ломают ровно 1 выбранный блок
+                this.isRescueHammer = false;
+                this.createExplosion(x, y, '#ffd54f');
+                this.grid[y][x] = null;
 
                 this.rebuildGridCache();
                 audioManager.playClear();
-                vibrationManager.comboVibration(targets.length * 2);
+                vibrationManager.comboVibration(2);
                 this.hammerMode = false;
                 this.canvas.classList.remove('hammer-mode', 'hammer-target');
                 document.getElementById('hammerIndicator').classList.remove('show');
                 this.addScreenShake(4);
+                this.updateUndoButtonUI();
                 this.saveGame();
                 if (!this.canPlaceAny()) this.checkGameOver();
             }
@@ -3734,13 +3885,13 @@
                 ctx.beginPath();
                 ctx.moveTo(x0 + rTL, y0);
                 ctx.lineTo(x1 - rTR, y0);
-                if (rTR > 0) ctx.quadraticCurveTo(x1, y0, x1, y0 + rTR);
+                if (rTR > 0) ctx.arcTo(x1, y0, x1, y0 + rTR, rTR);
                 ctx.lineTo(x1, y1 - rBR);
-                if (rBR > 0) ctx.quadraticCurveTo(x1, y1, x1 - rBR, y1);
+                if (rBR > 0) ctx.arcTo(x1, y1, x1 - rBR, y1, rBR);
                 ctx.lineTo(x0 + rBL, y1);
-                if (rBL > 0) ctx.quadraticCurveTo(x0, y1, x0, y1 - rBL);
+                if (rBL > 0) ctx.arcTo(x0, y1, x0, y1 - rBL, rBL);
                 ctx.lineTo(x0, y0 + rTL);
-                if (rTL > 0) ctx.quadraticCurveTo(x0, y0, x0 + rTL, y0);
+                if (rTL > 0) ctx.arcTo(x0, y0, x0 + rTL, y0, rTL);
                 ctx.closePath();
             }
 
@@ -3748,7 +3899,7 @@
                 ctx.beginPath();
                 if (!connected[0] && !connected[3] && rTL > 0) {
                     ctx.moveTo(x0, y0 + rTL);
-                    ctx.quadraticCurveTo(x0, y0, x0 + rTL, y0);
+                    ctx.arcTo(x0, y0, x0 + rTL, y0, rTL);
                 }
                 if (!connected[0]) {
                     ctx.moveTo(x0 + rTL, y0);
@@ -3756,7 +3907,7 @@
                 }
                 if (!connected[0] && !connected[1] && rTR > 0) {
                     ctx.moveTo(x1 - rTR, y0);
-                    ctx.quadraticCurveTo(x1, y0, x1, y0 + rTR);
+                    ctx.arcTo(x1, y0, x1, y0 + rTR, rTR);
                 }
                 if (!connected[1]) {
                     ctx.moveTo(x1, y0 + rTR);
@@ -3764,7 +3915,7 @@
                 }
                 if (!connected[2] && !connected[1] && rBR > 0) {
                     ctx.moveTo(x1, y1 - rBR);
-                    ctx.quadraticCurveTo(x1, y1, x1 - rBR, y1);
+                    ctx.arcTo(x1, y1, x1 - rBR, y1, rBR);
                 }
                 if (!connected[2]) {
                     ctx.moveTo(x1 - rBR, y1);
@@ -3772,7 +3923,7 @@
                 }
                 if (!connected[2] && !connected[3] && rBL > 0) {
                     ctx.moveTo(x0 + rBL, y1);
-                    ctx.quadraticCurveTo(x0, y1, x0, y1 - rBL);
+                    ctx.arcTo(x0, y1, x0, y1 - rBL, rBL);
                 }
                 if (!connected[3]) {
                     ctx.moveTo(x0, y1 - rBL);
@@ -3781,8 +3932,8 @@
             }
             
             drawBlock(ctx, block, x, y, size, isHighlighted = false, isPreview = false, glowColor = null, gx = -1, gy = -1, customConn = null, customScale = 1) {
-                const pad = isPreview ? 3.5 : 3;
-                const cornerR = Math.round(size * 0.32);
+                const pad = 3;
+                const cornerR = Math.round(size * 0.28);
                 
                 let scale = customScale;
                 if (!isPreview && gx >= 0 && gy >= 0 && this.blockScaleAnimations.size > 0) {
@@ -4017,15 +4168,162 @@
 
                 ctx.restore();
             }
+
+            // Отрисовка визуальных призрачных подсказок действий для всех 5 этапов обучения
+            drawTutorialGhostHints(now) {
+                if (!this.tutorialActive || !this.tutorialGhostCtx) return;
+                const gCtx = this.tutorialGhostCtx;
+                gCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+                if (this.dragActive && this.isDraggingToBoard) return;
+
+                const drawTapGhost = (cx, cy, color = '#4fc3f7', showRotateArc = false) => {
+                    const phase = (now % 1100) / 1100;
+                    const ringR = 16 + phase * 26;
+                    const ringAlpha = (1 - phase) * 0.85;
+
+                    gCtx.save();
+                    gCtx.strokeStyle = color;
+                    gCtx.lineWidth = 3;
+                    gCtx.globalAlpha = ringAlpha;
+                    gCtx.beginPath();
+                    gCtx.arc(cx, cy, ringR, 0, Math.PI * 2);
+                    gCtx.stroke();
+
+                    const pressScale = 0.86 + 0.18 * Math.sin(phase * Math.PI * 2);
+                    gCtx.globalAlpha = 0.9;
+                    gCtx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+                    gCtx.shadowColor = color;
+                    gCtx.shadowBlur = 14;
+                    gCtx.beginPath();
+                    gCtx.arc(cx, cy, 9 * pressScale, 0, Math.PI * 2);
+                    gCtx.fill();
+
+                    if (showRotateArc) {
+                        const rotAngle = (now * 0.004) % (Math.PI * 2);
+                        gCtx.strokeStyle = '#ffd54f';
+                        gCtx.lineWidth = 2.8;
+                        gCtx.beginPath();
+                        gCtx.arc(cx, cy, 28, rotAngle, rotAngle + Math.PI * 1.35);
+                        gCtx.stroke();
+                    }
+                    gCtx.restore();
+                };
+
+                if (this.tutorialStep === 1) {
+                    const slot0 = document.getElementById('slot0');
+                    if (slot0 && this.previewBlocks[0]) {
+                        const rect = slot0.getBoundingClientRect();
+                        const scx = rect.left + rect.width / 2;
+                        const scy = rect.top + rect.height / 2;
+                        const pulse = 1 + 0.08 * Math.sin(now * 0.008);
+                        gCtx.save();
+                        gCtx.globalAlpha = 0.45;
+                        this.drawBlock(gCtx, this.previewBlocks[0], scx - 28, scy - 28, 56, true, true, '#4fc3f7', -1, -1, null, pulse);
+                        gCtx.restore();
+                        drawTapGhost(scx, scy, '#4fc3f7', false);
+                    }
+                } else if (this.tutorialStep === 2) {
+                    const slot0 = document.getElementById('slot0');
+                    const block = this.previewBlocks[0];
+                    if (slot0 && block) {
+                        const sRect = slot0.getBoundingClientRect();
+                        const bRect = this.canvas.getBoundingClientRect();
+                        const startX = sRect.left + sRect.width / 2;
+                        const startY = sRect.top + sRect.height / 2;
+                        const endX = bRect.left + (2 + 0.5) * this.cellSize;
+                        const endY = bRect.top + (2 + 0.5) * this.cellSize;
+
+                        const cycle = (now % 1500) / 1500;
+                        const t = Math.min(cycle / 0.82, 1);
+                        const ease = 1 - Math.pow(1 - t, 3);
+                        const curX = startX + (endX - startX) * ease;
+                        const curY = startY + (endY - startY) * ease;
+                        const alpha = cycle < 0.82 ? (0.35 + 0.5 * Math.sin(t * Math.PI)) : (1 - (cycle - 0.82) / 0.18) * 0.5;
+
+                        gCtx.save();
+                        gCtx.setLineDash([6, 6]);
+                        gCtx.strokeStyle = 'rgba(79, 195, 247, 0.45)';
+                        gCtx.lineWidth = 2.5;
+                        gCtx.beginPath();
+                        gCtx.moveTo(startX, startY);
+                        gCtx.lineTo(endX, endY);
+                        gCtx.stroke();
+                        gCtx.setLineDash([]);
+
+                        gCtx.globalAlpha = Math.max(0, alpha);
+                        this.drawBlock(gCtx, block, curX - this.cellSize / 2, curY - this.cellSize / 2, this.cellSize, true, true, '#4fc3f7', -1, -1);
+                        gCtx.restore();
+                    }
+                } else if (this.tutorialStep === 3) {
+                    const slot1 = document.getElementById('slot1');
+                    if (slot1 && this.previewBlocks[1]) {
+                        const rect = slot1.getBoundingClientRect();
+                        const scx = rect.left + rect.width / 2;
+                        const scy = rect.top + rect.height / 2;
+                        const pulse = 1 + 0.08 * Math.sin(now * 0.008);
+                        gCtx.save();
+                        gCtx.globalAlpha = 0.45;
+                        this.drawBlock(gCtx, this.previewBlocks[1], scx - 28, scy - 28, 56, true, true, '#69f0ae', -1, -1, null, pulse);
+                        gCtx.restore();
+                        drawTapGhost(scx, scy, '#69f0ae', false);
+                    }
+                } else if (this.tutorialStep === 4) {
+                    const slot1 = document.getElementById('slot1');
+                    if (slot1 && this.previewBlocks[1]) {
+                        const rect = slot1.getBoundingClientRect();
+                        const scx = rect.left + rect.width / 2;
+                        const scy = rect.top + rect.height / 2;
+                        const targetGhost = new Block('CORNER', 0); // [1, 1, 0, 0]
+                        gCtx.save();
+                        gCtx.globalAlpha = 0.32 + 0.2 * Math.sin(now * 0.007);
+                        this.drawBlock(gCtx, targetGhost, scx - 28, scy - 28, 56, true, true, '#ffd54f', -1, -1);
+                        gCtx.restore();
+                        drawTapGhost(scx, scy, '#ffd54f', true);
+                    }
+                } else if (this.tutorialStep === 5) {
+                    const slot1 = document.getElementById('slot1');
+                    const block = this.previewBlocks[1];
+                    if (slot1 && block) {
+                        const sRect = slot1.getBoundingClientRect();
+                        const bRect = this.canvas.getBoundingClientRect();
+                        const startX = sRect.left + sRect.width / 2;
+                        const startY = sRect.top + sRect.height / 2;
+                        const endX = bRect.left + (1 + 0.5) * this.cellSize;
+                        const endY = bRect.top + (3 + 0.5) * this.cellSize;
+
+                        const cycle = (now % 1500) / 1500;
+                        const t = Math.min(cycle / 0.82, 1);
+                        const ease = 1 - Math.pow(1 - t, 3);
+                        const curX = startX + (endX - startX) * ease;
+                        const curY = startY + (endY - startY) * ease;
+                        const alpha = cycle < 0.82 ? (0.35 + 0.5 * Math.sin(t * Math.PI)) : (1 - (cycle - 0.82) / 0.18) * 0.5;
+
+                        gCtx.save();
+                        gCtx.setLineDash([6, 6]);
+                        gCtx.strokeStyle = 'rgba(105, 240, 174, 0.45)';
+                        gCtx.lineWidth = 2.5;
+                        gCtx.beginPath();
+                        gCtx.moveTo(startX, startY);
+                        gCtx.lineTo(endX, endY);
+                        gCtx.stroke();
+                        gCtx.setLineDash([]);
+
+                        gCtx.globalAlpha = Math.max(0, alpha);
+                        this.drawBlock(gCtx, block, curX - this.cellSize / 2, curY - this.cellSize / 2, this.cellSize, true, true, '#69f0ae', -1, -1);
+                        gCtx.restore();
+                    }
+                }
+            }
             
-            draw(dtFactor) {
+            draw(dtFactor, now = performance.now()) {
                 const cs = this.cellSize;
                 const bs = this.boardCssSize;
 
                 this.ctx.clearRect(0, 0, bs, bs);
                 
-                const slotPad = 3.2;
-                const slotR = Math.round(cs * 0.3);
+                const slotPad = 3;
+                const slotR = Math.round(cs * 0.28);
                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.025)';
                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
                 this.ctx.lineWidth = 1;
@@ -4038,32 +4336,64 @@
                         this.ctx.stroke();
                     }
                 }
+
+                // Призрачная подсветка целевой клетки на поле во время обучения (шаг 2 и шаг 5)
+                if (this.tutorialActive && (this.tutorialStep === 2 || this.tutorialStep === 5)) {
+                    const tx = this.tutorialStep === 2 ? 2 : 1;
+                    const ty = this.tutorialStep === 2 ? 2 : 3;
+                    const ghostBlock = this.tutorialStep === 2
+                        ? new Block('STRAIGHT', 1)
+                        : new Block('CORNER', 0);
+                    if (!this.grid[ty][tx]) {
+                        const hx = tx * cs;
+                        const hy = ty * cs;
+                        const hr = Math.round(cs * 0.28);
+                        const pulseAlpha = 0.25 + 0.2 * Math.sin(now * 0.007);
+                        this.ctx.save();
+                        this.traceCustomSquircle(this.ctx, hx + 3, hy + 3, hx + cs - 3, hy + cs - 3, hr, hr, hr, hr);
+                        this.ctx.fillStyle = `rgba(79, 195, 247, ${pulseAlpha.toFixed(2)})`;
+                        this.ctx.fill();
+                        this.ctx.strokeStyle = '#ffd54f';
+                        this.ctx.lineWidth = 2.5;
+                        this.ctx.setLineDash([5, 4]);
+                        this.ctx.stroke();
+                        this.ctx.setLineDash([]);
+                        this.ctx.globalAlpha = 0.42 + 0.18 * Math.sin(now * 0.007);
+                        this.drawBlock(this.ctx, ghostBlock, hx, hy, cs, true, true, null, -1, -1);
+                        this.ctx.restore();
+                    }
+                }
                 
                 if (this.hoverCell.x >= 0 && this.hoverCell.y >= 0) {
                     const hx = this.hoverCell.x * cs, hy = this.hoverCell.y * cs;
-                    const hr = Math.round(cs * 0.3);
+                    const hr = Math.round(cs * 0.28);
                     if (this.hammerMode && this.grid[this.hoverCell.y][this.hoverCell.x]) {
-                        this.traceCustomSquircle(this.ctx, hx + 2, hy + 2, hx + cs - 2, hy + cs - 2, hr, hr, hr, hr);
+                        this.traceCustomSquircle(this.ctx, hx + 3, hy + 3, hx + cs - 3, hy + cs - 3, hr, hr, hr, hr);
                         this.ctx.fillStyle = 'rgba(255, 213, 79, 0.28)';
                         this.ctx.fill();
                         this.ctx.strokeStyle = '#ffd54f';
                         this.ctx.lineWidth = 2;
                         this.ctx.stroke();
                     } else if (this.selectedSlot !== null && !this.grid[this.hoverCell.y][this.hoverCell.x]) {
-                        this.traceCustomSquircle(this.ctx, hx + 2, hy + 2, hx + cs - 2, hy + cs - 2, hr, hr, hr, hr);
-                        this.ctx.fillStyle = 'rgba(79, 195, 247, 0.16)';
-                        this.ctx.fill();
-                        this.ctx.strokeStyle = 'rgba(79, 195, 247, 0.6)';
-                        this.ctx.lineWidth = 2;
-                        this.ctx.stroke();
-                        const ghost = this.previewBlocks[this.selectedSlot];
-                        if (ghost) {
-                            this.ctx.globalAlpha = 0.7;
-                            this.drawBlock(this.ctx, ghost, hx, hy, cs, false, true, null, -1, -1);
-                            this.ctx.globalAlpha = 1;
+                        const allowedInTutorial = !this.tutorialActive ||
+                            (this.tutorialStep === 2 && this.hoverCell.x === 2 && this.hoverCell.y === 2) ||
+                            (this.tutorialStep === 5 && this.hoverCell.x === 1 && this.hoverCell.y === 3);
+                        if (allowedInTutorial) {
+                            this.traceCustomSquircle(this.ctx, hx + 3, hy + 3, hx + cs - 3, hy + cs - 3, hr, hr, hr, hr);
+                            this.ctx.fillStyle = 'rgba(79, 195, 247, 0.16)';
+                            this.ctx.fill();
+                            this.ctx.strokeStyle = 'rgba(79, 195, 247, 0.6)';
+                            this.ctx.lineWidth = 2;
+                            this.ctx.stroke();
+                            const ghost = this.previewBlocks[this.selectedSlot];
+                            if (ghost) {
+                                this.ctx.globalAlpha = 0.75;
+                                this.drawBlock(this.ctx, ghost, hx, hy, cs, false, true, null, -1, -1);
+                                this.ctx.globalAlpha = 1;
+                            }
                         }
                     } else if (this.grid[this.hoverCell.y][this.hoverCell.x]) {
-                        this.traceCustomSquircle(this.ctx, hx + 2, hy + 2, hx + cs - 2, hy + cs - 2, hr, hr, hr, hr);
+                        this.traceCustomSquircle(this.ctx, hx + 3, hy + 3, hx + cs - 3, hy + cs - 3, hr, hr, hr, hr);
                         this.ctx.fillStyle = 'rgba(255, 107, 157, 0.18)';
                         this.ctx.fill();
                     }
@@ -4162,6 +4492,10 @@
                     this.ctx.fill();
                 }
                 this.ctx.restore();
+
+                if (this.tutorialActive) {
+                    this.drawTutorialGhostHints(now);
+                }
             }
             
             animate(timestamp = performance.now()) {
@@ -4174,7 +4508,7 @@
 
                 this.updateScreenShake(dtFactor);
                 this.updateBlockScaleAnimations(dtFactor);
-                this.draw(dtFactor);
+                this.draw(dtFactor, timestamp);
 
                 this.rafId = requestAnimationFrame((t) => this.animate(t));
             }
@@ -4229,7 +4563,7 @@
                 
                 ctx.font = '30px -apple-system, sans-serif';
                 ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.shadowBlur = 0;
-                ctx.fillText('Loopix v1.2', w/2, 980);
+                ctx.fillText('Loopix v1.3', w/2, 980);
             }
             
             downloadShareImage() {
@@ -4293,11 +4627,13 @@
                 this.dyingBlocks = [];
                 this.boardDimAlpha = 0;
                 this.hammerMode = false; this.hammerUsed = false; this.hammerAvailable = true;
-                this.isRescueHammer = false;
+                this.isRescueHammer = false; this.rescueUsed = false;
                 this.nextHammerAt = 2000;
+                this.undoState = null;
+                this.pendingAdAction = null;
                 this.shakeIntensity = 0; this.blockScaleAnimations.clear();
                 this.slowMotionActive = false; this.timeScale = 1;
-                this.dragActive = false; this.dragRotated = false; this.isDraggingToBoard = false;
+                this.dragActive = false; this.isDraggingToBoard = false;
                 this.canvasPointerDown = false; this.isCanvasSliding = false;
                 this.isNewRecord = false;
                 if (this.dragFloatingCanvas) {
@@ -4318,6 +4654,7 @@
                 this.placeInitialBlocks();
                 this.generateNewSet(true);
                 this.updateScore();
+                this.updateUndoButtonUI();
                 this.updateUITexts();
                 this.saveGame();
             }
